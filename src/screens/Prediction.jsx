@@ -55,7 +55,8 @@ export const PredictionInput = ({ onPredict, onBack, currentLang }) => {
     setLoading(true);
     setApiError('');
     try {
-      const res = await fetch('http://localhost:8001/predict', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const res = await fetch(`${apiBase}/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

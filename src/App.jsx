@@ -18,6 +18,7 @@ import { VideoTutorials, ArticleReader, CropCalendar, PestIdentification } from 
 import { FAQScreen, ContactSupport, AboutKshetrixAI, LanguageSelection, PrivacyPolicy, TermsOfService } from './screens/Support';
 import { CropDeepDive, MandiDetails, MarketComparison, PriceAlertSetup, UserActivityLog, ReferralProgram } from './screens/ExtendedFeatures';
 import { translate } from './utils/translations';
+import { supabase } from './services/supabaseClient';
 
 import { 
   Mail, Lock, Phone, ShieldCheck, ArrowRight, 
@@ -45,6 +46,30 @@ export default function App() {
     localStorage.setItem('agrico_lang', language);
   }, [language]);
 
+  // Load profile from Supabase on mount
+  useEffect(() => {
+    const loadProfile = async () => {
+      const profileId = localStorage.getItem('agrico_profile_id');
+      if (!profileId) return;
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', profileId)
+          .single();
+        if (error) throw error;
+        if (data) {
+          setProfileName(data.name);
+          setProfileState(data.state);
+          setProfileDistrict(data.district);
+        }
+      } catch (err) {
+        console.warn("Failed to load profile from Supabase:", err.message);
+      }
+    };
+    loadProfile();
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('agrico_profile_name', profileName);
   }, [profileName]);
@@ -56,6 +81,38 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('agrico_profile_district', profileDistrict);
   }, [profileDistrict]);
+
+  const handleSaveProfile = async (targetScreen) => {
+    try {
+      const profileId = localStorage.getItem('agrico_profile_id');
+      const payload = {
+        name: profileName,
+        state: profileState,
+        district: profileDistrict,
+        updated_at: new Date().toISOString()
+      };
+
+      if (profileId) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(payload)
+          .eq('id', profileId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase
+          .from('profiles')
+          .insert([payload])
+          .select();
+        if (error) throw error;
+        if (data && data.length > 0) {
+          localStorage.setItem('agrico_profile_id', data[0].id);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed saving profile to Supabase, continuing locally:", e.message);
+    }
+    navigate(targetScreen);
+  };
 
   const navigate = (screen) => setCurrentScreen(screen);
 
@@ -105,8 +162,8 @@ export default function App() {
       );
       
       // Profile Setup
-      case 'profile-setup': return <ProfileSetup onNext={() => navigate('crop-prefs')} onBack={() => navigate('intro3')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
-      case 'edit-profile': return <ProfileSetup onNext={() => navigate('settings')} onBack={() => navigate('settings')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
+      case 'profile-setup': return <ProfileSetup onNext={() => handleSaveProfile('crop-prefs')} onBack={() => navigate('intro3')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
+      case 'edit-profile': return <ProfileSetup onNext={() => handleSaveProfile('settings')} onBack={() => navigate('settings')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
       case 'crop-prefs': return <CropPreferences onNext={() => navigate('dashboard')} onBack={() => navigate('profile-setup')} />;
       
       // Dashboard & Intelligence

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, CloudRain, Sun, Wind, ShieldCheck, Send, Settings, User, Bell, Globe, Key, Check } from 'lucide-react';
 import { getApiKey, setApiKey } from '../services/mandiApi';
+import { supabase } from '../services/supabaseClient';
 
 const Header = ({ title, onBack }) => (
   <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)', borderBottom: '1px solid var(--gray-light)' }}>
@@ -199,6 +200,37 @@ export const GovtSchemes = ({ onBack }) => {
   const [submitting, setSubmitting] = useState(false);
   const [successApply, setSuccessApply] = useState(false);
 
+  // Load existing applications from Supabase on mount
+  useEffect(() => {
+    const loadApplications = async () => {
+      const profileId = localStorage.getItem('agrico_profile_id');
+      if (!profileId) return;
+      try {
+        const { data, error } = await supabase
+          .from('scheme_applications')
+          .select('scheme_name, status, tracking_id')
+          .eq('profile_id', profileId);
+        if (error) throw error;
+        if (data && data.length > 0) {
+          setSchemes(prev => prev.map(s => {
+            const match = data.find(d => d.scheme_name === s.name);
+            if (match) {
+              return { 
+                ...s, 
+                status: match.status === 'Under Review' ? 'Applied / Review' : match.status,
+                color: match.status === 'Under Review' ? 'var(--warning)' : 'var(--success)'
+              };
+            }
+            return s;
+          }));
+        }
+      } catch (err) {
+        console.warn("Failed to load scheme applications from Supabase:", err.message);
+      }
+    };
+    loadApplications();
+  }, []);
+
   const handleApplyClick = (scheme) => {
     setSelectedScheme(null); // close details if open
     setShowApplyForm(scheme);
@@ -214,7 +246,7 @@ export const GovtSchemes = ({ onBack }) => {
     setSuccessApply(false);
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     const errors = {};
     if (!formInputs.farmerName.trim()) errors.farmerName = "Farmer Name is required.";
@@ -230,20 +262,40 @@ export const GovtSchemes = ({ onBack }) => {
     }
     
     setSubmitting(true);
-    setTimeout(() => {
-      const appTrackingId = `KSH-SCH-2026-${Math.floor(10000 + Math.random() * 90000)}`;
-      setTrackingId(appTrackingId);
-      setSubmitting(false);
-      setSuccessApply(true);
-      
-      // Update scheme status
-      setSchemes(prev => prev.map(s => {
-        if (s.id === showApplyForm.id) {
-          return { ...s, status: "Applied / Review", color: "var(--warning)" };
-        }
-        return s;
-      }));
-    }, 1200);
+    const appTrackingId = `KSH-SCH-2026-${Math.floor(10000 + Math.random() * 90000)}`;
+    const profileId = localStorage.getItem('agrico_profile_id');
+    
+    try {
+      const { error } = await supabase
+        .from('scheme_applications')
+        .insert([{
+          profile_id: profileId || null,
+          scheme_name: showApplyForm.name,
+          farmer_name: formInputs.farmerName,
+          aadhaar: formInputs.aadhaar,
+          land_area: Number(formInputs.landArea),
+          survey_number: formInputs.surveyNo,
+          bank_account: formInputs.bankAccount,
+          ifsc: formInputs.ifsc.toUpperCase(),
+          tracking_id: appTrackingId,
+          status: 'Under Review'
+        }]);
+      if (error) throw error;
+    } catch (err) {
+      console.warn("Failed saving application to Supabase, continuing locally:", err.message);
+    }
+
+    setTrackingId(appTrackingId);
+    setSubmitting(false);
+    setSuccessApply(true);
+    
+    // Update scheme status
+    setSchemes(prev => prev.map(s => {
+      if (s.id === showApplyForm.id) {
+        return { ...s, status: "Applied / Review", color: "var(--warning)" };
+      }
+      return s;
+    }));
   };
 
   return (
@@ -472,7 +524,8 @@ export const AIChatbot = ({ onBack }) => {
     setInput('');
     
     try {
-      const res = await fetch('http://localhost:8001/chat', {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const res = await fetch(`${apiBase}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input })
