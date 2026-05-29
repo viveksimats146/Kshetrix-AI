@@ -1,0 +1,154 @@
+:root {
+  /* Primary Colors - Agriculture Inspired */
+  --primary: #2D6A4F;
+  --primary-dark: #1B4332;
+  --primary-light: #40916C;
+  --primary-lighter: #52B788;
+  --primary-pale: #D8F3DC;
+  
+  /* Secondary / Accent */
+  --secondary: #74C69D;
+  --accent: #B7E4C7;
+  
+  /* Status Colors */
+  --success: #2D6A4F;
+  --warning: #FFB703;
+  --error: #E63946;
+  --info: #219EBC;
+  
+  /* Neutrals */
+  --white: #FFFFFF;
+  --off-white: #F8F9FA;
+  --gray-light: #E9ECEF;
+  --gray-medium: #ADB5BD;
+  --gray-dark: #495057;
+  --black: #1B4332; /* Very dark green instead of pure black */
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* Spacing */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+}
+
+/* Dark Mode Theme */
+.mobile-container[data-theme="dark"] {
+  --primary: #52B788;
+  --primary-dark: #95D5B2;
+  --primary-light: #74C69D;
+  --primary-lighter: #95D5B2;
+  --primary-pale: #1B4332;
+  --white: #1E1E1E;
+  --off-white: #121212;
+  --gray-light: #2D2D2D;
+  --gray-medium: #888888;
+  --gray-dark: #CCCCCC;
+  --black: #F8F9FA;
+}
+
+/* Harvest Gold Theme */
+.mobile-container[data-theme="gold"] {
+  --primary: #D4A373;
+  --primary-dark: #583101;
+  --primary-light: #E9C46A;
+  --primary-lighter: #F4A261;
+  --primary-pale: #FEFAE0;
+  --white: #FFFFFF;
+  --off-white: #FAEDCD;
+  --gray-light: #E9ECEF;
+  --gray-medium: #ADB5BD;
+  --gray-dark: #495057;
+  --black: #583101;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Outfit', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--white);
+  color: var(--black);
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Mobile Frame Wrapper */
+.mobile-container {
+  width: 100%;
+  height: 100vh;
+  background-color: var(--white);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navigation & Layout */
+.screen-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px; /* Space for bottom nav */
+}
+
+.screen-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Common UI Components */
+.card {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-lg);
+  padding: 14px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  width: 100%;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: var(--white);
+}
+
+h1, h2, h3 {
+  color: var(--black);
+  font-weight: 700;
+}
+
+p {
+  color: var(--gray-dark);
+  line-height: 1.5;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

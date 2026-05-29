@@ -1,0 +1,7 @@
+{
+  "name": "Agrico – 50 Screen UI Generator",
+  "id": "agrico-ui-generator-2024",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"]
+}
