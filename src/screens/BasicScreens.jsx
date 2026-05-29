@@ -64,7 +64,7 @@ export const SplashScreen = ({ onNext }) => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        style={{ width: '100%', paddingBottom: '40px' }}
+        style={{ width: '100%', paddingBottom: '24px' }}
       >
         <button 
           onClick={onNext} 
