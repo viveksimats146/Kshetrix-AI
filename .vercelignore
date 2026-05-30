@@ -1,0 +1,7 @@
+backend/
+Agriculture_price_dataset.csv
+ui design/
+.env
+.git
+node_modules/
+dist/
