@@ -19,8 +19,8 @@ export const SplashScreen = ({ onNext }) => {
       overflow: 'hidden'
     }}>
       {/* Background decoration */}
-      <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '300px', height: '300px', borderRadius: '150px', background: 'rgba(255,255,255,0.05)', filter: 'blur(40px)' }}></div>
-      <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '400px', height: '400px', borderRadius: '200px', background: 'rgba(255,255,255,0.03)', filter: 'blur(60px)' }}></div>
+      <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '300px', height: '300px', borderRadius: '150px', background: 'rgba(255,255,255,0.05)', filter: 'blur(40px)', pointerEvents: 'none' }}></div>
+      <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '400px', height: '400px', borderRadius: '200px', background: 'rgba(255,255,255,0.03)', filter: 'blur(60px)', pointerEvents: 'none' }}></div>
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
         <motion.div 

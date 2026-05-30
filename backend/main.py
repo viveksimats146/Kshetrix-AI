@@ -19,10 +19,69 @@ app.add_middleware(
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "Agriculture_price_dataset.csv")
 agrico = AgricoML(DATA_PATH)
 
+def init_supabase_db():
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        print("DATABASE_URL env variable not set, skipping DB initialization.")
+        return
+    
+    print("Connecting to Supabase database to initialize tables...")
+    try:
+        import psycopg2
+        conn = psycopg2.connect(db_url)
+        conn.autocommit = True
+        cur = conn.cursor()
+        sql = """
+        -- Create User Profiles table
+        CREATE TABLE IF NOT EXISTS public.profiles (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name TEXT NOT NULL,
+            state TEXT NOT NULL,
+            district TEXT NOT NULL,
+            crop_preferences TEXT[] DEFAULT '{}',
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+        );
+
+        -- Enable Row Level Security (RLS)
+        ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+        
+        DROP POLICY IF EXISTS "Allow public access to profiles" ON public.profiles;
+        CREATE POLICY "Allow public access to profiles" ON public.profiles FOR ALL USING (true) WITH CHECK (true);
+
+        -- Create Scheme Applications table
+        CREATE TABLE IF NOT EXISTS public.scheme_applications (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            profile_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+            scheme_name TEXT NOT NULL,
+            farmer_name TEXT NOT NULL,
+            aadhaar TEXT NOT NULL,
+            land_area NUMERIC NOT NULL,
+            survey_number TEXT NOT NULL,
+            bank_account TEXT NOT NULL,
+            ifsc TEXT NOT NULL,
+            tracking_id TEXT UNIQUE NOT NULL,
+            status TEXT DEFAULT 'Under Review' NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+        );
+
+        -- Enable RLS
+        ALTER TABLE public.scheme_applications ENABLE ROW LEVEL SECURITY;
+        
+        DROP POLICY IF EXISTS "Allow public access to applications" ON public.scheme_applications;
+        CREATE POLICY "Allow public access to applications" ON public.scheme_applications FOR ALL USING (true) WITH CHECK (true);
+        """
+        cur.execute(sql)
+        print("Supabase database tables verified/created successfully.")
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print(f"Error initializing Supabase DB: {e}")
+
 @app.on_event("startup")
 async def startup_event():
     print("Starting Kshetrix-AI Backend...")
     try:
+        init_supabase_db()
         agrico.load_and_preprocess()
         agrico.train_price_models()
         agrico.setup_nlp()
