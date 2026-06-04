@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, Activity, CloudRain, ShieldCheck, 
-  ChevronRight, ChevronLeft, Calendar, Droplets, MapPin, Search, User
+  ChevronRight, ChevronLeft, Calendar, Droplets, MapPin, Search, User, Sparkles
 } from 'lucide-react';
 import { translate } from '../utils/translations';
 import { getCropEmoji } from '../utils/cropHelper.js';
@@ -24,6 +24,20 @@ export const MainDashboard = ({ onNav, onBack, profileName, currentLang, selecte
           </div>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
+          <button style={{ 
+            width: '40px', 
+            height: '40px', 
+            borderRadius: '10px', 
+            background: 'linear-gradient(135deg, var(--primary-pale), #D8F3DC)', 
+            border: '2px solid var(--primary)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            boxShadow: '0 0 10px rgba(45, 106, 79, 0.2)', 
+            cursor: 'pointer' 
+          }} onClick={() => onNav('chatbot')} title={translate('aiAssistant', currentLang)}>
+            <Sparkles size={20} color="var(--primary)" />
+          </button>
           <button style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--white)', border: '1px solid var(--gray-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--shadow-sm)' }} onClick={() => onNav('support')}>
             <Droplets size={20} color="var(--primary)" />
           </button>

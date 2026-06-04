@@ -24,7 +24,7 @@ import { supabase } from './services/supabaseClient';
 import { 
   Mail, Lock, Phone, ShieldCheck, ArrowRight, 
   ChevronLeft, Layout, TrendingUp, Info, User,
-  Home, BarChart2, Leaf, Bell
+  Home, BarChart2, Leaf, Bell, Sparkles
 } from 'lucide-react';
 
 export default function App() {
@@ -216,7 +216,7 @@ export default function App() {
       // Utilities
       case 'schemes': return <GovtSchemes onBack={() => navigate('dashboard')} />;
       case 'settings': return <SettingsScreen onBack={() => navigate('profile')} theme={theme} setTheme={setTheme} onNavigate={navigate} language={language} />;
-      case 'chatbot': return <AIChatbot onBack={() => navigate('dashboard')} />;
+      case 'chatbot': return <AIChatbot onBack={() => navigate('dashboard')} currentLang={language} />;
       case 'alerts': return <WeatherDashboard onBack={() => navigate('dashboard')} state={formData.state} district={formData.district} commodity={formData.commodity} date={formData.date} />;
       
       // Community
@@ -340,6 +340,13 @@ export default function App() {
     );
   };
 
+  const nonLoggedScreens = [
+    'splash', 'welcome', 'login', 'signup', 'otp', 
+    'intro1', 'intro2', 'intro3', 'profile-setup', 'crop-prefs',
+    'dashboard', 'chatbot', 'prediction-loading'
+  ];
+  const showGlobalAiButton = !nonLoggedScreens.includes(currentScreen);
+
   return (
     <div className="mobile-container" data-theme={theme}>
       <AnimatePresence mode="wait">
@@ -357,7 +364,32 @@ export default function App() {
 
       <GlobalBottomNav />
 
-
+      {showGlobalAiButton && (
+        <button 
+          onClick={() => navigate('chatbot')} 
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            zIndex: 1010,
+            width: '40px',
+            height: '40px',
+            borderRadius: '10px',
+            background: currentScreen === 'prediction-result' ? 'rgba(255, 255, 255, 0.2)' : 'linear-gradient(135deg, var(--primary-pale), #D8F3DC)',
+            color: currentScreen === 'prediction-result' ? 'white' : 'var(--primary)',
+            border: currentScreen === 'prediction-result' ? 'none' : '2px solid var(--primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: currentScreen === 'prediction-result' ? 'none' : '0 4px 12px rgba(45, 106, 79, 0.15)',
+            cursor: 'pointer',
+            padding: 0
+          }}
+          title={translate('aiAssistant', language)}
+        >
+          <Sparkles size={20} />
+        </button>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { ChevronLeft, CloudRain, Sun, Wind, ShieldCheck, Send, Settings, User, B
 import { getApiKey, setApiKey } from '../services/mandiApi';
 import { supabase } from '../services/supabaseClient';
 import { fetchWeatherForDistrict } from '../services/weatherApi';
+import { translate } from '../utils/translations';
 
 const Header = ({ title, onBack }) => (
   <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)', borderBottom: '1px solid var(--gray-light)' }}>
@@ -556,15 +557,19 @@ export const GovtSchemes = ({ onBack }) => {
   );
 };
 
-export const AIChatbot = ({ onBack }) => {
-  const [messages, setMessages] = useState([{ sender: 'ai', text: 'Namaste! How can I help you with your crops today?' }]);
+export const AIChatbot = ({ onBack, currentLang = 'English' }) => {
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+
+  useEffect(() => {
+    setMessages([{ sender: 'ai', text: translate('aiChatbotWelcome', currentLang) }]);
+  }, [currentLang]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
     
     const userMsg = { sender: 'user', text: input };
-    setMessages([...messages, userMsg]);
+    setMessages(prev => [...prev, userMsg]);
     setInput('');
     
     try {
@@ -577,13 +582,13 @@ export const AIChatbot = ({ onBack }) => {
       const data = await res.json();
       setMessages(prev => [...prev, { sender: 'ai', text: data.response }]);
     } catch (e) {
-      setMessages(prev => [...prev, { sender: 'ai', text: "Error connecting to NLP Backend." }]);
+      setMessages(prev => [...prev, { sender: 'ai', text: translate('aiChatbotError', currentLang) }]);
     }
   };
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--white)' }}>
-      <Header title="Agri Advisor (AI)" onBack={onBack} />
+      <Header title={translate('aiChatbotTitle', currentLang)} onBack={onBack} />
       <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px', background: 'var(--off-white)' }}>
         {messages.map((m, i) => (
           <div key={i} style={{ alignSelf: m.sender === 'user' ? 'flex-end' : 'flex-start', background: m.sender === 'user' ? 'var(--primary)' : 'var(--primary-pale)', color: m.sender === 'user' ? 'white' : 'var(--black)', padding: '12px 16px', borderRadius: m.sender === 'user' ? '16px 16px 0 16px' : '16px 16px 16px 0', maxWidth: '80%' }}>
@@ -592,7 +597,7 @@ export const AIChatbot = ({ onBack }) => {
         ))}
       </div>
       <div style={{ padding: '15px 20px', borderTop: '1px solid var(--gray-light)', display: 'flex', gap: '10px' }}>
-        <input value={input} onChange={e => setInput(e.target.value)} placeholder="Type a question..." style={{ flex: 1, padding: '12px 16px', borderRadius: '20px', border: '1px solid var(--gray-light)', fontSize: '14px', outline: 'none' }} onKeyDown={e => e.key === 'Enter' && handleSend()} />
+        <input value={input} onChange={e => setInput(e.target.value)} placeholder={translate('aiChatbotPlaceholder', currentLang)} style={{ flex: 1, padding: '12px 16px', borderRadius: '20px', border: '1px solid var(--gray-light)', fontSize: '14px', outline: 'none' }} onKeyDown={e => e.key === 'Enter' && handleSend()} />
         <button onClick={handleSend} style={{ width: '44px', height: '44px', borderRadius: '22px', background: 'var(--primary)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Send size={18} />
         </button>

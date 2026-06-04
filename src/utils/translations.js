@@ -58,7 +58,12 @@ const translations = {
     Thunderstorm: "Thunderstorm",
     "Clear Sky": "Clear Sky",
     Windy: "Windy",
-    "Heavy Rain": "Heavy Rain"
+    "Heavy Rain": "Heavy Rain",
+    aiAssistant: "AI Assistant",
+    aiChatbotTitle: "Agri Advisor (AI)",
+    aiChatbotWelcome: "Namaste! How can I help you with your crops today?",
+    aiChatbotPlaceholder: "Type a question...",
+    aiChatbotError: "Error connecting to NLP Backend."
   },
   "हिंदी": {
     welcome: "स्वागत है,",
@@ -119,7 +124,12 @@ const translations = {
     Thunderstorm: "आंधी तूफान",
     "Clear Sky": "साफ आसमान",
     Windy: "हवादार",
-    "Heavy Rain": "भारी बारिश"
+    "Heavy Rain": "भारी बारिश",
+    aiAssistant: "AI सहायक",
+    aiChatbotTitle: "कृषि सलाहकार (AI)",
+    aiChatbotWelcome: "नमस्ते! आज मैं आपकी फसलों में क्या मदद कर सकता हूँ?",
+    aiChatbotPlaceholder: "एक प्रश्न पूछें...",
+    aiChatbotError: "NLP बैकएंड से कनेक्ट करने में त्रुटि।"
   },
   "मराठी": {
     welcome: "स्वागत आहे,",
@@ -180,7 +190,12 @@ const translations = {
     Thunderstorm: "वादळ",
     "Clear Sky": "स्वच्छ आकाश",
     Windy: "वादळी",
-    "Heavy Rain": "मुसळधार पाऊस"
+    "Heavy Rain": "मुसळधार पाऊस",
+    aiAssistant: "AI सहाय्यक",
+    aiChatbotTitle: "कृषी सल्लागार (AI)",
+    aiChatbotWelcome: "नमस्ते! आज मी तुमच्या पिकांच्या बाबतीत तुम्हाला कशी मदत करू शकतो?",
+    aiChatbotPlaceholder: "प्रश्न विचारा...",
+    aiChatbotError: "NLP बॅकएंडशी जोडण्यात त्रुटी."
   },
   "ગુજરાતી": {
     welcome: "સ્વાગત છે,",
@@ -307,7 +322,12 @@ const translations = {
     Thunderstorm: "ఉరుములతో కూడిన వర్షం",
     "Clear Sky": "నిర్మలమైన ఆకాశం",
     Windy: "గాలి వీచును",
-    "Heavy Rain": "భారీ వర్షం"
+    "Heavy Rain": "భారీ వర్షం",
+    aiAssistant: "AI సహాయకుడు",
+    aiChatbotTitle: "వ్యవసాయ సలహాదారు (AI)",
+    aiChatbotWelcome: "నమస్తే! ఈరోజు మీ పంటల విషయంలో నేను మీకు ఎలా సహాయపడగలను?",
+    aiChatbotPlaceholder: "ఒక ప్రశ్న టైప్ చేయండి...",
+    aiChatbotError: "NLP బ్యాకెండ్‌కి కనెక్ట్ చేయడంలో లోపం."
   },
   "বাংলা": {
     welcome: "স্বাগতম,",
