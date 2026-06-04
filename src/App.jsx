@@ -30,7 +30,7 @@ import {
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('splash');
   const [predictionResult, setPredictionResult] = useState(null);
-  const [formData, setFormData] = useState({ state: 'Maharashtra', district: 'Nashik', commodity: 'Onion' });
+  const [formData, setFormData] = useState({ state: 'Maharashtra', district: 'Nashik', commodity: 'Onion', date: '2026-06-15' });
   const [theme, setTheme] = useState(localStorage.getItem('agrico_theme') || 'green');
   const [language, setLanguage] = useState(localStorage.getItem('agrico_lang') || 'English');
   const [profileName, setProfileName] = useState(localStorage.getItem('agrico_profile_name') || 'Ramesh Kumar');
@@ -38,9 +38,14 @@ export default function App() {
   const [profileDistrict, setProfileDistrict] = useState(localStorage.getItem('agrico_profile_district') || 'Nashik');
   const [signupPhone, setSignupPhone] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
+  const [otpTargetScreen, setOtpTargetScreen] = useState('dashboard');
+  const [otpBackScreen, setOtpBackScreen] = useState('login');
+  const [cameFromOnboarding, setCameFromOnboarding] = useState(false);
+  const [loginPhoneOrEmail, setLoginPhoneOrEmail] = useState('');
 
   useEffect(() => {
     localStorage.setItem('agrico_theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
   useEffect(() => {
@@ -119,7 +124,7 @@ export default function App() {
 
   const handlePredict = (data) => {
     setPredictionResult(data);
-    setFormData({ state: data.state, district: data.district, commodity: data.commodity });
+    setFormData({ state: data.state, district: data.district, commodity: data.commodity, date: data.date });
     navigate('prediction-result');
   };
 
@@ -131,19 +136,42 @@ export default function App() {
     navigate('prediction-result');
   };
 
+  const handleLoginNext = (screen, phoneOrEmail) => {
+    if (screen === 'otp') {
+      setOtpTargetScreen('profile-setup');
+      setOtpBackScreen('login');
+      setCameFromOnboarding(true);
+      setLoginPhoneOrEmail(phoneOrEmail);
+      navigate('otp');
+    } else {
+      navigate(screen);
+    }
+  };
+
+  const handleSignupNext = (screen) => {
+    if (screen === 'otp') {
+      setOtpTargetScreen('profile-setup');
+      setOtpBackScreen('signup');
+      setCameFromOnboarding(true);
+      navigate('otp');
+    } else {
+      navigate(screen);
+    }
+  };
+
   const renderScreen = () => {
     switch (currentScreen) {
-      case 'splash': return <SplashScreen onNext={() => navigate('welcome')} />;
+      case 'splash': return <SplashScreen onNext={() => navigate(localStorage.getItem('agrico_logged_in') === 'true' ? 'dashboard' : 'login')} />;
       case 'welcome': return <WelcomeScreen onNext={() => navigate('intro1')} onLogin={() => navigate('login')} onBack={() => navigate('splash')} />;
       
       // Onboarding
       case 'intro1': return <IntroScreen step={1} onNext={() => navigate('intro2')} onBack={() => navigate('welcome')} />;
       case 'intro2': return <IntroScreen step={2} onNext={() => navigate('intro3')} onBack={() => navigate('intro1')} />;
       case 'intro3': return <IntroScreen step={3} onNext={() => navigate('profile-setup')} onBack={() => navigate('intro2')} />;
-      case 'login': return <LoginScreen onNext={(s) => navigate(s)} onSignup={() => navigate('signup')} onBack={() => navigate('welcome')} />;
+      case 'login': return <LoginScreen onNext={handleLoginNext} onSignup={() => navigate('signup')} onBack={() => navigate('splash')} />;
       case 'signup': return (
         <SignupScreen 
-          onNext={(s) => navigate(s)} 
+          onNext={handleSignupNext} 
           onBack={() => navigate('login')} 
           profileName={profileName} 
           setProfileName={setProfileName} 
@@ -155,38 +183,41 @@ export default function App() {
       );
       case 'otp': return (
         <OTPScreen 
-          onVerify={() => navigate('profile-setup')} 
-          onBack={() => navigate('signup')} 
-          phone={signupPhone} 
-          email={signupEmail} 
+          onVerify={() => {
+            localStorage.setItem('agrico_logged_in', 'true');
+            navigate(otpTargetScreen);
+          }} 
+          onBack={() => navigate(otpBackScreen)} 
+          phone={otpBackScreen === 'login' ? loginPhoneOrEmail : signupPhone} 
+          email={otpBackScreen === 'login' ? '' : signupEmail} 
         />
       );
       
       // Profile Setup
-      case 'profile-setup': return <ProfileSetup onNext={() => handleSaveProfile('crop-prefs')} onBack={() => navigate('intro3')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
+      case 'profile-setup': return <ProfileSetup onNext={() => handleSaveProfile('crop-prefs')} onBack={() => navigate(otpBackScreen === 'login' ? 'welcome' : 'intro3')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
       case 'edit-profile': return <ProfileSetup onNext={() => handleSaveProfile('settings')} onBack={() => navigate('settings')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
       case 'crop-prefs': return <CropPreferences onNext={() => navigate('dashboard')} onBack={() => navigate('profile-setup')} />;
       
       // Dashboard & Intelligence
-      case 'dashboard': return <MainDashboard onNav={(id) => navigate(id)} onBack={() => navigate('login')} profileName={profileName} currentLang={language} selectedCrop={formData.commodity} />;
-      case 'analytics': return <AnalyticsDashboard onBack={() => navigate('dashboard')} />;
+      case 'dashboard': return <MainDashboard onNav={(id) => navigate(id)} onBack={cameFromOnboarding ? () => navigate('crop-prefs') : null} profileName={profileName} currentLang={language} selectedCrop={formData.commodity} />;
+      case 'analytics': return <AnalyticsDashboard onBack={() => navigate('dashboard')} selectedCrop={formData.commodity} />;
       case 'market-monitor': return <MarketMonitoring onBack={() => navigate('dashboard')} />;
-      case 'profit-loss': return <ProfitLossAnalysis onBack={() => navigate('dashboard')} />;
+      case 'profit-loss': return <ProfitLossAnalysis onBack={() => predictionResult ? navigate('prediction-result') : navigate('dashboard')} predictionResult={predictionResult} selectedCrop={formData.commodity} />;
       
       // Prediction Flow
       case 'crops':
-      case 'prediction-input': return <PredictionInput onPredict={handlePredict} onBack={() => navigate('dashboard')} currentLang={language} />;
-      case 'prediction-loading': return <PredictionLoading formData={predictionResult} onComplete={(res) => {
+      case 'prediction-input': return <PredictionInput onPredict={handlePredict} onBack={() => navigate('dashboard')} currentLang={language} formData={formData} setFormData={setFormData} />;
+      case 'prediction-loading': return <PredictionLoading formData={predictionResult} currentLang={language} onComplete={(res) => {
         setPredictionResult(prev => ({ ...prev, result: res }));
         navigate('prediction-result');
       }} />;
-      case 'prediction-result': return <PredictionResult result={predictionResult?.result} onBack={() => navigate('prediction-input')} onDetails={() => navigate('profit-loss')} currentLang={language} />;
+      case 'prediction-result': return <PredictionResult result={predictionResult} onBack={() => navigate('prediction-input')} onDetails={() => navigate('profit-loss')} currentLang={language} />;
       
       // Utilities
       case 'schemes': return <GovtSchemes onBack={() => navigate('dashboard')} />;
       case 'settings': return <SettingsScreen onBack={() => navigate('profile')} theme={theme} setTheme={setTheme} onNavigate={navigate} language={language} />;
       case 'chatbot': return <AIChatbot onBack={() => navigate('dashboard')} />;
-      case 'alerts': return <WeatherDashboard onBack={() => navigate('dashboard')} state={formData.state} district={formData.district} commodity={formData.commodity} />;
+      case 'alerts': return <WeatherDashboard onBack={() => navigate('dashboard')} state={formData.state} district={formData.district} commodity={formData.commodity} date={formData.date} />;
       
       // Community
       case 'forum': return <FarmerForum onBack={() => navigate('dashboard')} />;
@@ -224,8 +255,8 @@ export default function App() {
       case 'crop-detail': return <CropDeepDive onBack={() => navigate('dashboard')} commodity={formData.commodity} state={formData.state} district={formData.district} />;
       case 'mandi-detail': return <MandiDetails onBack={() => navigate('market-monitor')} defaultState={profileState} defaultDistrict={profileDistrict} />;
       case 'compare': return <MarketComparison onBack={() => navigate('analytics')} />;
-      case 'alert-setup': return <PriceAlertSetup onBack={() => navigate('alerts')} />;
-      case 'notification-settings': return <PriceAlertSetup onBack={() => navigate('settings')} />;
+      case 'alert-setup': return <PriceAlertSetup onBack={() => navigate('alerts')} defaultState={formData.state} defaultDistrict={formData.district} />;
+      case 'notification-settings': return <PriceAlertSetup onBack={() => navigate('settings')} defaultState={formData.state} defaultDistrict={formData.district} />;
       case 'activity': return <UserActivityLog onBack={() => navigate('profile')} />;
       case 'referral': return <ReferralProgram onBack={() => navigate('profile')} />;
       
@@ -245,7 +276,7 @@ export default function App() {
               <div className="card" onClick={() => navigate('edit-profile')}>{translate('accountDetails', language)}</div>
               <div className="card" onClick={() => navigate('schemes')}>{translate('pmKisan', language)}</div>
               <div className="card" onClick={() => navigate('settings')}>{translate('settings', language)}</div>
-              <div className="card" onClick={() => navigate('welcome')} style={{ color: 'var(--error)' }}>Logout</div>
+              <div className="card" onClick={() => { localStorage.removeItem('agrico_logged_in'); setCameFromOnboarding(false); navigate('welcome'); }} style={{ color: 'var(--error)' }}>Logout</div>
             </div>
           </div>
         </div>

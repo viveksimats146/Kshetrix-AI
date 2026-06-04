@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, BarChart2, MapPin, Bell, Activity, Users, Star, RefreshCw } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { getStates, getDistricts, getMarkets, getMarketPrices } from '../services/mandiApi';
+import { getStates, getDistricts, getMarkets, getMarketPrices, getCommodities } from '../services/mandiApi';
 import { getCropEmoji } from '../utils/cropHelper';
 
 const Header = ({ title, onBack }) => (
@@ -244,37 +244,113 @@ export const MarketComparison = ({ onBack }) => (
   </div>
 );
 
-export const PriceAlertSetup = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
-    <Header title="Setup Price Alerts" onBack={onBack} />
-    <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <div style={{ width: '64px', height: '64px', background: 'var(--primary-pale)', borderRadius: '32px', margin: '0 auto 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}><Bell size={32}/></div>
-        <h3 style={{ fontSize: '18px', fontWeight: '700' }}>Never Miss a Good Price</h3>
-        <p style={{ fontSize: '13px', color: 'var(--gray-medium)', marginTop: '5px' }}>We'll notify you via SMS when your target price is hit.</p>
-      </div>
+export const PriceAlertSetup = ({ onBack, defaultState = 'Maharashtra', defaultDistrict = 'Nashik' }) => {
+  const [commodities, setCommodities] = useState([
+    "Wheat", "Paddy (Rice)", "Potato", "Tomato", "Onion",
+    "Cotton", "Soybean", "Sugarcane", "Maize", "Mustard",
+    "Gram (Chana)", "Tur (Arhar)", "Moong", "Urad", "Groundnut",
+    "Garlic", "Ginger", "Turmeric", "Black Pepper", "Cardamom"
+  ]);
+  const [markets, setMarkets] = useState([]);
+  const [selectedCommodity, setSelectedCommodity] = useState('Onion');
+  const [selectedMarket, setSelectedMarket] = useState('');
+  const [targetPrice, setTargetPrice] = useState('2500');
+  const [loading, setLoading] = useState(true);
+  const [alertSet, setAlertSet] = useState(false);
 
-      <div className="card">
-        <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>Commodity</label>
-        <select style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--gray-light)', marginBottom: '15px', outline: 'none' }}>
-          <option>Onion</option>
-          <option>Tomato</option>
-        </select>
+  useEffect(() => {
+    getCommodities().then(c => {
+      if (c && c.length > 0) {
+        setCommodities(c);
+      }
+    }).catch(e => console.warn("Failed fetching commodities for alert setup:", e));
+  }, []);
 
-        <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>Target Mandi</label>
-        <select style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--gray-light)', marginBottom: '15px', outline: 'none' }}>
-          <option>Lasalgaon APMC</option>
-          <option>Any Mandi (Within 50km)</option>
-        </select>
+  useEffect(() => {
+    setLoading(true);
+    getMarkets(defaultState, defaultDistrict)
+      .then(m => {
+        setMarkets(m);
+        if (m.length > 0) {
+          setSelectedMarket(m[0]);
+        } else {
+          setSelectedMarket('Any Mandi (Within 50km)');
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Error fetching markets for alert setup:", err);
+        setLoading(false);
+      });
+  }, [defaultState, defaultDistrict]);
 
-        <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px' }}>Target Price (₹ per Quintal)</label>
-        <input type="number" defaultValue="2500" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--gray-light)', marginBottom: '25px', outline: 'none', background: 'var(--white)', color: 'var(--black)' }} />
+  const handleSetAlert = () => {
+    setAlertSet(true);
+    setTimeout(() => {
+      setAlertSet(false);
+      onBack();
+    }, 2000);
+  };
 
-        <button className="btn-primary">Set Alert</button>
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
+      <Header title="Setup Price Alerts" onBack={onBack} />
+      <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <div style={{ width: '64px', height: '64px', background: 'var(--primary-pale)', borderRadius: '32px', margin: '0 auto 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}><Bell size={32}/></div>
+          <h3 style={{ fontSize: '18px', fontWeight: '700' }}>Never Miss a Good Price</h3>
+          <p style={{ fontSize: '13px', color: 'var(--gray-medium)', marginTop: '5px' }}>We'll notify you via SMS when your target price is hit.</p>
+        </div>
+
+        {alertSet ? (
+          <div className="card" style={{ textAlign: 'center', padding: '40px 20px', borderLeft: '4px solid var(--primary)' }}>
+            <div style={{ fontSize: '40px', marginBottom: '10px' }}>🔔</div>
+            <h4 style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '18px', marginBottom: '8px' }}>Alert Configured successfully!</h4>
+            <p style={{ color: 'var(--gray-medium)', fontSize: '13px' }}>Monitoring {selectedCommodity} modal price at {selectedMarket} for target ₹{targetPrice}.</p>
+          </div>
+        ) : (
+          <div className="card">
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--gray-dark)' }}>Commodity</label>
+            <select 
+              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--gray-light)', marginBottom: '15px', outline: 'none', background: 'var(--white)', color: 'var(--black)' }} 
+              value={selectedCommodity} 
+              onChange={e => setSelectedCommodity(e.target.value)}
+            >
+              {commodities.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--gray-dark)' }}>Target Mandi</label>
+            <select 
+              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--gray-light)', marginBottom: '15px', outline: 'none', background: 'var(--white)', color: 'var(--black)' }} 
+              value={selectedMarket} 
+              onChange={e => setSelectedMarket(e.target.value)}
+              disabled={loading}
+            >
+              {loading ? (
+                <option>Loading mandis for {defaultDistrict}...</option>
+              ) : (
+                <>
+                  {markets.map(m => <option key={m} value={m}>{m}</option>)}
+                  <option value="Any Mandi (Within 50km)">Any Mandi (Within 50km)</option>
+                </>
+              )}
+            </select>
+
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--gray-dark)' }}>Target Price (₹ per Quintal)</label>
+            <input 
+              type="number" 
+              value={targetPrice} 
+              onChange={e => setTargetPrice(e.target.value)}
+              style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--gray-light)', marginBottom: '25px', outline: 'none', background: 'var(--white)', color: 'var(--black)' }} 
+            />
+
+            <button className="btn-primary" onClick={handleSetAlert} disabled={loading}>Set Alert</button>
+          </div>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const UserActivityLog = ({ onBack }) => (
   <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, CloudRain, Sun, Wind, ShieldCheck, Send, Settings, User, Bell, Globe, Key, Check } from 'lucide-react';
 import { getApiKey, setApiKey } from '../services/mandiApi';
 import { supabase } from '../services/supabaseClient';
+import { fetchWeatherForDistrict } from '../services/weatherApi';
 
 const Header = ({ title, onBack }) => (
   <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)', borderBottom: '1px solid var(--gray-light)' }}>
@@ -12,13 +13,26 @@ const Header = ({ title, onBack }) => (
   </div>
 );
 
-export const WeatherDashboard = ({ onBack, state = 'Maharashtra', district = 'Nashik', commodity = 'Onion' }) => {
-  // Simple hash to get deterministic pseudo-random weather based on district
+export const WeatherDashboard = ({ onBack, state = 'Maharashtra', district = 'Nashik', commodity = 'Onion', date }) => {
+  const [weatherData, setWeatherData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Simple hash to get deterministic pseudo-random weather based on district + date as fallback
   let hash = 0;
-  for (let i = 0; i < district.length; i++) {
-    hash = district.charCodeAt(i) + ((hash << 5) - hash);
+  const seedString = district + (date || '');
+  for (let i = 0; i < seedString.length; i++) {
+    hash = seedString.charCodeAt(i) + ((hash << 5) - hash);
   }
   hash = Math.abs(hash);
+
+  const formatDate = (dStr) => {
+    try {
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      return new Date(dStr).toLocaleDateString(undefined, options);
+    } catch (e) {
+      return dStr;
+    }
+  };
 
   const temperatures = [22, 25, 28, 31, 34, 37, 18, 15];
   const humidities = [45, 55, 65, 75, 80, 40, 35, 90];
@@ -28,11 +42,34 @@ export const WeatherDashboard = ({ onBack, state = 'Maharashtra', district = 'Na
   
   const idx = hash % conditions.length;
   
-  const temp = temperatures[idx];
-  const humidity = humidities[idx];
-  const wind = windSpeeds[idx];
-  const rainProb = rainProbs[idx];
-  const cond = conditions[idx];
+  const defaultWeather = {
+    temp: temperatures[idx],
+    humidity: humidities[idx],
+    wind: windSpeeds[idx],
+    rainProb: rainProbs[idx],
+    condition: conditions[idx],
+    date: date || new Date().toISOString().split('T')[0]
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    fetchWeatherForDistrict(district, date)
+      .then(data => {
+        if (data) {
+          setWeatherData(data);
+        } else {
+          setWeatherData(defaultWeather);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setWeatherData(defaultWeather);
+        setLoading(false);
+      });
+  }, [district, date]);
+
+  const activeWeather = weatherData || defaultWeather;
+  const { temp, humidity, wind, rainProb, condition } = activeWeather;
 
   // Weather icon selector
   const renderWeatherIcon = (c) => {
@@ -45,7 +82,7 @@ export const WeatherDashboard = ({ onBack, state = 'Maharashtra', district = 'Na
 
   // Weather-and-Crop Advisories Generator
   const getAdvisories = () => {
-    const isWet = cond.includes('Rain') || cond.includes('Cloudy') || rainProb > 50;
+    const isWet = condition.includes('Rain') || condition.includes('Cloudy') || rainProb > 50;
     const isHot = temp > 32;
     
     const crop = commodity.toLowerCase();
@@ -100,29 +137,36 @@ export const WeatherDashboard = ({ onBack, state = 'Maharashtra', district = 'Na
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
       <Header title="Weather Alerts" onBack={onBack} />
       <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
-        <div className="card" style={{ padding: '20px', marginBottom: '20px', background: 'linear-gradient(135deg, #4A90E2, #50E3C2)', color: 'white', border: 'none' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h1 style={{ fontSize: '48px', fontWeight: '800' }}>{temp}°C</h1>
-              <p style={{ fontSize: '16px', opacity: 0.9 }}>{district}, {state}</p>
-              <p style={{ fontSize: '13px', opacity: 0.8, marginTop: '5px', fontWeight: '600' }}>Condition: {cond}</p>
+        {loading ? (
+          <p style={{ color: 'var(--gray-medium)', fontSize: '14px', textAlign: 'center', marginTop: '20px' }}>Retrieving live weather forecast...</p>
+        ) : (
+          <>
+            <div className="card" style={{ padding: '20px', marginBottom: '20px', background: 'linear-gradient(135deg, #4A90E2, #50E3C2)', color: 'white', border: 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <h1 style={{ fontSize: '48px', fontWeight: '800' }}>{temp}°C</h1>
+                  <p style={{ fontSize: '16px', opacity: 0.9 }}>{district}, {state}</p>
+                  {date && <p style={{ fontSize: '12px', opacity: 0.8, marginTop: '3px' }}>Forecasted on {formatDate(activeWeather.date)}</p>}
+                  <p style={{ fontSize: '13px', opacity: 0.8, marginTop: '5px', fontWeight: '600' }}>Condition: {condition}</p>
+                </div>
+                {renderWeatherIcon(condition)}
+              </div>
+              <div style={{ display: 'flex', gap: '15px', marginTop: '20px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+                <div style={{ flex: 1 }}><p style={{ fontSize: '12px', opacity: 0.8 }}>Humidity</p><p style={{ fontWeight: '700' }}>{humidity}%</p></div>
+                <div style={{ flex: 1 }}><p style={{ fontSize: '12px', opacity: 0.8 }}>Wind</p><p style={{ fontWeight: '700' }}>{wind} km/h</p></div>
+                <div style={{ flex: 1 }}><p style={{ fontSize: '12px', opacity: 0.8 }}>Rain Prob.</p><p style={{ fontWeight: '700' }}>{rainProb}%</p></div>
+              </div>
             </div>
-            {renderWeatherIcon(cond)}
-          </div>
-          <div style={{ display: 'flex', gap: '15px', marginTop: '20px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.2)' }}>
-            <div style={{ flex: 1 }}><p style={{ fontSize: '12px', opacity: 0.8 }}>Humidity</p><p style={{ fontWeight: '700' }}>{humidity}%</p></div>
-            <div style={{ flex: 1 }}><p style={{ fontSize: '12px', opacity: 0.8 }}>Wind</p><p style={{ fontWeight: '700' }}>{wind} km/h</p></div>
-            <div style={{ flex: 1 }}><p style={{ fontSize: '12px', opacity: 0.8 }}>Rain Prob.</p><p style={{ fontWeight: '700' }}>{rainProb}%</p></div>
-          </div>
-        </div>
 
-        <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '15px' }}>Agri Advisories ({commodity})</h3>
-        {advisories.map((adv, idx) => (
-          <div key={idx} className="card" style={{ marginBottom: '15px', borderLeft: `4px solid ${adv.severity}` }}>
-            <h4 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '5px' }}>{adv.title}</h4>
-            <p style={{ fontSize: '13px', color: 'var(--gray-medium)', lineHeight: '1.5' }}>{adv.desc}</p>
-          </div>
-        ))}
+            <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '15px' }}>Agri Advisories ({commodity})</h3>
+            {advisories.map((adv, idx) => (
+              <div key={idx} className="card" style={{ marginBottom: '15px', borderLeft: `4px solid ${adv.severity}`, background: 'var(--white)' }}>
+                <h4 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '5px', color: 'var(--black)' }}>{adv.title}</h4>
+                <p style={{ fontSize: '13px', color: 'var(--gray-medium)', lineHeight: '1.5' }}>{adv.desc}</p>
+              </div>
+            ))}
+          </>
+        )}
       </div>
     </div>
   );

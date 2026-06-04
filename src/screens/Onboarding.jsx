@@ -33,27 +33,46 @@ const InputField = ({ label, icon, placeholder, type = 'text', value, onChange }
   </div>
 );
 
-export const LoginScreen = ({ onNext, onBack, onSignup }) => (
-  <Container title="Login" onBack={onBack}>
-    <div style={{ marginTop: '20px' }}>
-      <h3 style={{ fontSize: '24px', marginBottom: '10px' }}>Welcome Back!</h3>
-      <p style={{ color: 'var(--gray-medium)', marginBottom: '30px' }}>Enter your credentials to continue</p>
-      
-      <InputField label="Phone Number / Email" icon={<Phone size={18}/>} placeholder="9876543210" />
-      <InputField label="Password" icon={<Lock size={18}/>} placeholder="••••••••" type="password" />
-      
-      <div style={{ textAlign: 'right', marginBottom: '30px' }}>
-        <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '13px', fontWeight: '600' }} onClick={() => onNext('forgot')}>Forgot Password?</button>
+export const LoginScreen = ({ onNext, onBack, onSignup }) => {
+  const [phoneOrEmail, setPhoneOrEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  return (
+    <Container title="Login" onBack={onBack}>
+      <div style={{ marginTop: '20px' }}>
+        <h3 style={{ fontSize: '24px', marginBottom: '10px' }}>Welcome Back!</h3>
+        <p style={{ color: 'var(--gray-medium)', marginBottom: '30px' }}>Enter your credentials to continue</p>
+        
+        <InputField 
+          label="Phone Number / Email" 
+          icon={<Phone size={18}/>} 
+          placeholder="9876543210" 
+          value={phoneOrEmail}
+          onChange={(e) => setPhoneOrEmail(e.target.value)}
+        />
+        <InputField 
+          label="Password" 
+          icon={<Lock size={18}/>} 
+          placeholder="••••••••" 
+          type="password" 
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        
+        <div style={{ textAlign: 'right', marginBottom: '30px' }}>
+          <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '13px', fontWeight: '600' }} onClick={() => onNext('forgot')}>Forgot Password?</button>
+        </div>
+        
+        <button className="btn-primary" onClick={() => onNext('otp', phoneOrEmail)}>Login</button>
+        
+        <div style={{ textAlign: 'center', marginTop: '40px' }}>
+          <p style={{ fontSize: '14px' }}>Don't have an account? <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700' }} onClick={onSignup}>Sign Up</button></p>
+        </div>
       </div>
-      
-      <button className="btn-primary" onClick={() => onNext('dashboard')}>Login</button>
-      
-      <div style={{ textAlign: 'center', marginTop: '40px' }}>
-        <p style={{ fontSize: '14px' }}>Don't have an account? <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700' }} onClick={onSignup}>Sign Up</button></p>
-      </div>
-    </div>
-  </Container>
-);
+    </Container>
+  );
+};
+
 
 export const SignupScreen = ({ 
   onNext, 

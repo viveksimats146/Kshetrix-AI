@@ -1,17 +1,17 @@
-import React from 'react';
-import { ChevronLeft, HelpCircle, Phone, Mail, FileText, Globe, Shield } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronLeft, HelpCircle, Phone, Mail, FileText, Shield } from 'lucide-react';
 
 const Header = ({ title, onBack }) => (
-  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'white', borderBottom: '1px solid var(--gray-light)' }}>
-    <button onClick={onBack} style={{ background: 'white', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)', borderBottom: '1px solid var(--gray-light)' }}>
+    <button onClick={onBack} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)', color: 'var(--black)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <ChevronLeft />
     </button>
-    <h2 style={{ fontSize: '18px' }}>{title}</h2>
+    <h2 style={{ fontSize: '18px', color: 'var(--black)' }}>{title}</h2>
   </div>
 );
 
 export const FAQScreen = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Frequently Asked Questions" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       {[
@@ -19,8 +19,8 @@ export const FAQScreen = ({ onBack }) => (
         { q: "Is the app available in Marathi?", a: "Yes, you can change the language to Marathi, Hindi, or English in the Language Settings." },
         { q: "How do I upload a diseased leaf photo?", a: "Go to Education > Pest Identification and click on 'Open Camera'." }
       ].map((faq, i) => (
-        <div key={i} className="card" style={{ marginBottom: '15px' }}>
-          <h4 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '10px', display: 'flex', gap: '10px' }}>
+        <div key={i} className="card" style={{ marginBottom: '15px', background: 'var(--white)' }}>
+          <h4 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '10px', display: 'flex', gap: '10px', color: 'var(--black)' }}>
             <HelpCircle size={18} color="var(--primary)" style={{ flexShrink: 0 }} /> {faq.q}
           </h4>
           <p style={{ fontSize: '13px', color: 'var(--gray-medium)', lineHeight: '1.5', paddingLeft: '28px' }}>{faq.a}</p>
@@ -30,51 +30,113 @@ export const FAQScreen = ({ onBack }) => (
   </div>
 );
 
-export const ContactSupport = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
-    <Header title="Contact Support" onBack={onBack} />
-    <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
-      <p style={{ fontSize: '14px', color: 'var(--gray-medium)', marginBottom: '20px', textAlign: 'center' }}>Our support team is available Mon-Sat, 9 AM to 6 PM.</p>
-      
-      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
-        <div style={{ width: '48px', height: '48px', background: 'var(--primary-pale)', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}><Phone size={24} /></div>
-        <div style={{ flex: 1 }}>
-          <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Toll Free Helpline</h4>
-          <p style={{ fontSize: '13px', color: 'var(--gray-medium)' }}>1800-123-4567</p>
-        </div>
-      </div>
-      
-      <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
-        <div style={{ width: '48px', height: '48px', background: 'var(--info-pale)', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--info)' }}><Mail size={24} /></div>
-        <div style={{ flex: 1 }}>
-          <h4 style={{ fontSize: '15px', fontWeight: '700' }}>Email Support</h4>
-          <p style={{ fontSize: '13px', color: 'var(--gray-medium)' }}>help@kshetrix.ai</p>
-        </div>
-      </div>
+export const ContactSupport = ({ onBack }) => {
+  const [message, setMessage] = useState('');
 
-      <div className="card">
-        <h4 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '15px' }}>Send us a message</h4>
-        <textarea placeholder="Describe your issue..." style={{ width: '100%', padding: '15px', borderRadius: '12px', border: '1px solid var(--gray-light)', height: '120px', marginBottom: '15px', resize: 'none', fontFamily: 'inherit' }}></textarea>
-        <button className="btn-primary">Submit Ticket</button>
+  const checkAvailability = (type) => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    // Available from 10 AM to 6 PM
+    const isAvailableTime = currentHour >= 10 && currentHour < 18;
+    
+    if (isAvailableTime) {
+      if (type === 'phone') {
+        window.location.href = 'tel:+918074989121';
+      } else if (type === 'email') {
+        window.location.href = 'mailto:vivekmpv1304@gmail.com?subject=Kshetrix-AI Support Inquiry';
+      }
+    } else {
+      alert('Support Call and Email routing is active daily from 10:00 AM to 6:00 PM. Please use the "Send us a message" box below for urgent concerns.');
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (!message.trim()) {
+      alert('Please describe your problem before submitting.');
+      return;
+    }
+    const text = encodeURIComponent(`Urgent Kshetrix-AI Support Message: ${message}`);
+    window.open(`https://wa.me/918074989121?text=${text}`, '_blank');
+    setMessage('');
+  };
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
+      <Header title="Contact Support" onBack={onBack} />
+      <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+        <p style={{ fontSize: '14px', color: 'var(--gray-medium)', marginBottom: '20px', textAlign: 'center' }}>
+          Support Helpline & Email is available daily from 10:00 AM to 6:00 PM.
+        </p>
+        
+        <div 
+          className="card" 
+          onClick={() => checkAvailability('phone')}
+          style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px', cursor: 'pointer', background: 'var(--white)' }}
+        >
+          <div style={{ width: '48px', height: '48px', background: 'var(--primary-pale)', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+            <Phone size={24} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--black)' }}>Helpline Number</h4>
+            <p style={{ fontSize: '13px', color: 'var(--gray-medium)' }}>+91 8074989121</p>
+          </div>
+        </div>
+        
+        <div 
+          className="card" 
+          onClick={() => checkAvailability('email')}
+          style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px', cursor: 'pointer', background: 'var(--white)' }}
+        >
+          <div style={{ width: '48px', height: '48px', background: 'var(--info-pale)', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--info)' }}>
+            <Mail size={24} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--black)' }}>Email Support</h4>
+            <p style={{ fontSize: '13px', color: 'var(--gray-medium)' }}>vivekmpv1304@gmail.com</p>
+          </div>
+        </div>
+
+        <div className="card" style={{ background: 'var(--white)' }}>
+          <h4 style={{ fontSize: '15px', fontWeight: '700', marginBottom: '15px', color: 'var(--black)' }}>Send us a message</h4>
+          <textarea 
+            placeholder="Describe your issue in detail..." 
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            style={{ 
+              width: '100%', 
+              padding: '15px', 
+              borderRadius: '12px', 
+              border: '1px solid var(--gray-light)', 
+              height: '120px', 
+              marginBottom: '15px', 
+              resize: 'none', 
+              fontFamily: 'inherit',
+              background: 'var(--white)',
+              color: 'var(--black)',
+              outline: 'none'
+            }}
+          ></textarea>
+          <button className="btn-primary" onClick={handleSendMessage}>Send Message</button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const AboutKshetrixAI = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="About Kshetrix-AI" onBack={onBack} />
     <div style={{ flex: 1, padding: '40px 20px', overflowY: 'auto', textAlign: 'center' }}>
       <div style={{ fontSize: '64px', marginBottom: '10px' }}>🌱</div>
-      <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Kshetrix-AI</h2>
+      <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--black)' }}>Kshetrix-AI</h2>
       <p style={{ fontSize: '14px', color: 'var(--gray-medium)', marginBottom: '30px' }}>Version 2.1.4 (Build 842)</p>
       
       <p style={{ fontSize: '15px', lineHeight: '1.6', color: 'var(--gray-dark)', marginBottom: '30px', textAlign: 'left' }}>
         Kshetrix-AI is a next-generation agricultural intelligence platform designed to empower farmers with data-driven insights. By combining satellite imagery, machine learning, and real-time market data, we help you maximize yield and profits.
       </p>
 
-      <div style={{ background: '#F8F9FA', padding: '20px', borderRadius: '12px', textAlign: 'left' }}>
-        <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '10px' }}>Made with ❤️ in India</h4>
+      <div style={{ background: 'var(--white)', padding: '20px', borderRadius: '12px', textAlign: 'left', boxShadow: 'var(--shadow-sm)' }}>
+        <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '10px', color: 'var(--black)' }}>Made with ❤️ in India</h4>
         <p style={{ fontSize: '12px', color: 'var(--gray-medium)' }}>© 2026 Kshetrix Technologies Pvt. Ltd.<br/>All rights reserved.</p>
       </div>
     </div>
@@ -113,11 +175,12 @@ export const LanguageSelection = ({ onBack, currentLang, onChangeLang }) => {
                 display: 'flex', 
                 justifyContent: 'space-between', 
                 alignItems: 'center',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                background: 'var(--white)'
               }}
             >
               <div>
-                <h4 style={{ fontSize: '16px', fontWeight: '700' }}>{l.lang}</h4>
+                <h4 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--black)' }}>{l.lang}</h4>
                 <p style={{ fontSize: '12px', color: 'var(--gray-medium)' }}>{l.sub}</p>
               </div>
               {isSelected ? (
@@ -134,31 +197,31 @@ export const LanguageSelection = ({ onBack, currentLang, onChangeLang }) => {
 };
 
 export const PrivacyPolicy = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Privacy Policy" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto', fontSize: '14px', lineHeight: '1.6', color: 'var(--gray-dark)' }}>
       <Shield size={32} color="var(--primary)" style={{ marginBottom: '20px' }} />
-      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px' }}>1. Data Collection</h3>
+      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px', color: 'var(--black)' }}>1. Data Collection</h3>
       <p style={{ marginBottom: '20px' }}>We collect location data and crop preferences to provide accurate weather and price predictions. This data is encrypted and securely stored.</p>
       
-      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px' }}>2. Third-Party Sharing</h3>
+      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px', color: 'var(--black)' }}>2. Third-Party Sharing</h3>
       <p style={{ marginBottom: '20px' }}>We do not sell your personal data to third parties. Anonymized crop data may be used for machine learning model improvements.</p>
       
-      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px' }}>3. User Rights</h3>
+      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px', color: 'var(--black)' }}>3. User Rights</h3>
       <p style={{ marginBottom: '20px' }}>You have the right to request deletion of your account and all associated data from our servers at any time via the Settings menu.</p>
     </div>
   </div>
 );
 
 export const TermsOfService = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Terms of Service" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto', fontSize: '14px', lineHeight: '1.6', color: 'var(--gray-dark)' }}>
       <FileText size={32} color="var(--info)" style={{ marginBottom: '20px' }} />
       <p style={{ marginBottom: '20px' }}>Last updated: May 15, 2026</p>
-      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px' }}>Usage Limitations</h3>
+      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px', color: 'var(--black)' }}>Usage Limitations</h3>
       <p style={{ marginBottom: '20px' }}>The AI price predictions provided by Kshetrix-AI are forecasts based on historical data. They should be used as advisory tools only. Kshetrix-AI is not liable for financial losses incurred due to market volatility.</p>
-      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px' }}>Account Security</h3>
+      <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px', color: 'var(--black)' }}>Account Security</h3>
       <p style={{ marginBottom: '20px' }}>Users are responsible for maintaining the confidentiality of their OTPs and account credentials.</p>
     </div>
   </div>

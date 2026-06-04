@@ -37,7 +37,7 @@
 }
 
 /* Dark Mode Theme */
-.mobile-container[data-theme="dark"] {
+:root[data-theme="dark"] {
   --primary: #52B788;
   --primary-dark: #95D5B2;
   --primary-light: #74C69D;
@@ -52,7 +52,7 @@
 }
 
 /* Harvest Gold Theme */
-.mobile-container[data-theme="gold"] {
+:root[data-theme="gold"] {
   --primary: #D4A373;
   --primary-dark: #583101;
   --primary-light: #E9C46A;

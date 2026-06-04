@@ -2,82 +2,55 @@ import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 import { Leaf, ArrowRight } from 'lucide-react';
+import logoImg from '../assets/logo.png';
 
 export const SplashScreen = ({ onNext }) => {
   return (
     <div style={{ 
       height: '100%', 
-      background: 'linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%)', 
-      color: 'white', 
+      background: 'linear-gradient(135deg, #FFFFFF 0%, #E8F7EC 50%, #D8F3DC 100%)', 
+      color: 'var(--black)', 
       display: 'flex', 
       flexDirection: 'column', 
       alignItems: 'center', 
       justifyContent: 'center',
-      padding: '20px',
+      padding: '24px',
       textAlign: 'center',
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* Background decoration */}
-      <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '300px', height: '300px', borderRadius: '150px', background: 'rgba(255,255,255,0.05)', filter: 'blur(40px)', pointerEvents: 'none' }}></div>
-      <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '400px', height: '400px', borderRadius: '200px', background: 'rgba(255,255,255,0.03)', filter: 'blur(60px)', pointerEvents: 'none' }}></div>
-
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <motion.div 
-          initial={{ scale: 0, rotate: -45 }} 
-          animate={{ scale: 1, rotate: 0 }} 
-          transition={{ type: 'spring', damping: 15 }}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+        <motion.img 
+          src={logoImg} 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
           style={{ 
-            width: '120px', 
-            height: '120px', 
-            borderRadius: '40px', 
-            background: 'rgba(255,255,255,0.15)', 
-            backdropFilter: 'blur(10px)',
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            marginBottom: '30px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+            width: '100%', 
+            maxWidth: '480px', 
+            height: 'auto',
+            objectFit: 'contain',
+            mixBlendMode: 'multiply',
+            padding: '10px'
           }}
-        >
-          <Leaf size={64} color="white" />
-        </motion.div>
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          style={{ color: 'white', fontSize: '42px', fontWeight: '800', letterSpacing: '1px', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}
-        >
-          Kshetrix-AI
-        </motion.h1>
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.8 }}
-          transition={{ delay: 0.4 }}
-          style={{ color: 'white', marginTop: '12px', fontSize: '16px', fontWeight: '500', opacity: 0.8 }}
-        >
-          AI-Powered Agri Intelligence
-        </motion.p>
+        />
       </div>
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
         style={{ width: '100%', paddingBottom: '24px' }}
       >
         <button 
           onClick={onNext} 
           className="btn-primary" 
           style={{ 
-            background: 'white', 
-            color: '#1B4332', 
-            border: 'none', 
             padding: '18px', 
             borderRadius: '16px', 
             fontSize: '18px', 
             fontWeight: '700', 
-            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+            boxShadow: '0 8px 24px rgba(45, 106, 79, 0.15)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

@@ -1,0 +1,42 @@
+
+> agrico-app@0.0.0 build
+> vite build
+
+[36mvite v4.5.14 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 2352 modules transformed.
+[32mΓ£ô built in 4.06s[39m
+node.exe : [31m"SplashScreen" is not exported by "src/screens/BasicScreens.jsx", imported by "src/App.jsx".[39m
+At C:\Program Files\nodejs\npm.ps1:29 char:3
++   & $NODE_EXE $NPM_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([31m"SplashScr.../App.jsx".[39m:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+file: [36mC:/Users/vivek/Desktop/PDD/src/App.jsx:6:9[39m
+[33m4: 
+5: // Import Screens
+6: import { SplashScreen, WelcomeScreen } from './screens/BasicScreens';
+            ^
+7: import { LoginScreen, SignupScreen, IntroScreen } from './screens/Onboarding';
+8: import { ProfileSetup, CropPreferences } from './screens/Profile';[39m
+[31merror during build:
+RollupError: "SplashScreen" is not exported by "src/screens/BasicScreens.jsx", imported by "src/App.jsx".
+    at error (file:///C:/Users/vivek/Desktop/PDD/node_modules/rollup/dist/es/shared/node-entry.js:2287:30)
+    at Module.error (file:///C:/Users/vivek/Desktop/PDD/node_modules/rollup/dist/es/shared/node-entry.js:13751:16)
+    at Module.traceVariable 
+(file:///C:/Users/vivek/Desktop/PDD/node_modules/rollup/dist/es/shared/node-entry.js:14181:29)
+    at ModuleScope.findVariable 
+(file:///C:/Users/vivek/Desktop/PDD/node_modules/rollup/dist/es/shared/node-entry.js:12621:39)
+    at FunctionScope.findVariable 
+(file:///C:/Users/vivek/Desktop/PDD/node_modules/rollup/dist/es/shared/node-entry.js:7130:38)
+    at ChildScope.findVariable 
+(file:///C:/Users/vivek/Desktop/PDD/node_modules/rollup/dist/es/shared/node-entry.js:7130:38)
+    at ReturnValueScope.findVariable 
+(file:///C:/Users/vivek/Desktop/PDD/node_modules/rollup/dist/es/shared/node-entry.js:7130:38)
+    at ChildScope.findVariable 
+(file:///C:/Users/vivek/Desktop/PDD/node_modules/rollup/dist/es/shared/node-entry.js:7130:38)
+    at BlockScope.findVariable 
+(file:///C:/Users/vivek/Desktop/PDD/node_modules/rollup/dist/es/shared/node-entry.js:7130:38)
+    at Identifier.bind 
+(file:///C:/Users/vivek/Desktop/PDD/node_modules/rollup/dist/es/shared/node-entry.js:8325:40)[39m
