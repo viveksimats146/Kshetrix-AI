@@ -4,6 +4,8 @@ import { getApiKey, setApiKey } from '../services/mandiApi';
 import { supabase } from '../services/supabaseClient';
 import { fetchWeatherForDistrict } from '../services/weatherApi';
 import { translate } from '../utils/translations';
+import { getSpeechLanguageCode } from '../utils/speechHelper';
+import { Mic, MicOff } from 'lucide-react';
 
 const Header = ({ title, onBack }) => (
   <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)', borderBottom: '1px solid var(--gray-light)' }}>
@@ -560,10 +562,54 @@ export const GovtSchemes = ({ onBack }) => {
 export const AIChatbot = ({ onBack, currentLang = 'English' }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
 
   useEffect(() => {
     setMessages([{ sender: 'ai', text: translate('aiChatbotWelcome', currentLang) }]);
   }, [currentLang]);
+
+  const toggleListening = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert(translate('voiceNotSupported', currentLang));
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = getSpeechLanguageCode(currentLang);
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      if (transcript) {
+        setInput(prev => prev ? prev + ' ' + transcript : transcript);
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error:", event.error);
+      if (event.error === 'not-allowed') {
+        alert(translate('voiceAccessDenied', currentLang));
+      }
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -596,9 +642,49 @@ export const AIChatbot = ({ onBack, currentLang = 'English' }) => {
           </div>
         ))}
       </div>
-      <div style={{ padding: '15px 20px', borderTop: '1px solid var(--gray-light)', display: 'flex', gap: '10px' }}>
-        <input value={input} onChange={e => setInput(e.target.value)} placeholder={translate('aiChatbotPlaceholder', currentLang)} style={{ flex: 1, padding: '12px 16px', borderRadius: '20px', border: '1px solid var(--gray-light)', fontSize: '14px', outline: 'none' }} onKeyDown={e => e.key === 'Enter' && handleSend()} />
-        <button onClick={handleSend} style={{ width: '44px', height: '44px', borderRadius: '22px', background: 'var(--primary)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ padding: '15px 20px', borderTop: '1px solid var(--gray-light)', display: 'flex', gap: '10px', alignItems: 'center' }}>
+        {isListening && (
+          <style>{`
+            @keyframes pulse-mic {
+              0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+              70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+              100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+            }
+          `}</style>
+        )}
+        <input 
+          value={input} 
+          onChange={e => setInput(e.target.value)} 
+          placeholder={isListening ? translate('voiceListening', currentLang) : translate('aiChatbotPlaceholder', currentLang)} 
+          style={{ flex: 1, padding: '12px 16px', borderRadius: '20px', border: '1px solid var(--gray-light)', fontSize: '14px', outline: 'none' }} 
+          onKeyDown={e => e.key === 'Enter' && handleSend()} 
+          disabled={isListening}
+        />
+        <button 
+          onClick={toggleListening} 
+          style={{ 
+            width: '44px', 
+            height: '44px', 
+            borderRadius: '22px', 
+            background: isListening ? 'var(--error)' : 'var(--primary-pale)', 
+            color: isListening ? 'white' : 'var(--primary)', 
+            border: 'none', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            animation: isListening ? 'pulse-mic 1.5s infinite' : 'none'
+          }}
+          title="Voice Input"
+        >
+          {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+        </button>
+        <button 
+          onClick={handleSend} 
+          style={{ width: '44px', height: '44px', borderRadius: '22px', background: 'var(--primary)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          disabled={isListening}
+        >
           <Send size={18} />
         </button>
       </div>

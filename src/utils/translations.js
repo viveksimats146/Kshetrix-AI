@@ -63,7 +63,10 @@ const translations = {
     aiChatbotTitle: "Agri Advisor (AI)",
     aiChatbotWelcome: "Namaste! How can I help you with your crops today?",
     aiChatbotPlaceholder: "Type a question...",
-    aiChatbotError: "Error connecting to NLP Backend."
+    aiChatbotError: "Error connecting to NLP Backend.",
+    voiceListening: "Listening...",
+    voiceNotSupported: "Voice input not supported in this browser.",
+    voiceAccessDenied: "Microphone access denied."
   },
   "हिंदी": {
     welcome: "स्वागत है,",
@@ -129,7 +132,10 @@ const translations = {
     aiChatbotTitle: "कृषि सलाहकार (AI)",
     aiChatbotWelcome: "नमस्ते! आज मैं आपकी फसलों में क्या मदद कर सकता हूँ?",
     aiChatbotPlaceholder: "एक प्रश्न पूछें...",
-    aiChatbotError: "NLP बैकएंड से कनेक्ट करने में त्रुटि।"
+    aiChatbotError: "NLP बैकएंड से कनेक्ट करने में त्रुटि।",
+    voiceListening: "सुन रहे हैं...",
+    voiceNotSupported: "इस ब्राउज़र में वॉयस इनपुट समर्थित नहीं है।",
+    voiceAccessDenied: "माइक्रोफोन एक्सेस अस्वीकार कर दिया गया।"
   },
   "मराठी": {
     welcome: "स्वागत आहे,",
@@ -195,7 +201,10 @@ const translations = {
     aiChatbotTitle: "कृषी सल्लागार (AI)",
     aiChatbotWelcome: "नमस्ते! आज मी तुमच्या पिकांच्या बाबतीत तुम्हाला कशी मदत करू शकतो?",
     aiChatbotPlaceholder: "प्रश्न विचारा...",
-    aiChatbotError: "NLP बॅकएंडशी जोडण्यात त्रुटी."
+    aiChatbotError: "NLP बॅकएंडशी जोडण्यात त्रुटी.",
+    voiceListening: "ऐकत आहे...",
+    voiceNotSupported: "या ब्राउझरमध्ये व्हॉइस इनपुट समर्थित नाही.",
+    voiceAccessDenied: "मायक्रोफोन प्रवेश नाकारला."
   },
   "ગુજરાતી": {
     welcome: "સ્વાગત છે,",
@@ -327,7 +336,10 @@ const translations = {
     aiChatbotTitle: "వ్యవసాయ సలహాదారు (AI)",
     aiChatbotWelcome: "నమస్తే! ఈరోజు మీ పంటల విషయంలో నేను మీకు ఎలా సహాయపడగలను?",
     aiChatbotPlaceholder: "ఒక ప్రశ్న టైప్ చేయండి...",
-    aiChatbotError: "NLP బ్యాకెండ్‌కి కనెక్ట్ చేయడంలో లోపం."
+    aiChatbotError: "NLP బ్యాకెండ్‌కి కనెక్ట్ చేయడంలో లోపం.",
+    voiceListening: "వింటున్నారు...",
+    voiceNotSupported: "ఈ బ్రౌజర్‌లో వాయిస్ ఇన్‌పుట్ సపోర్ట్ చేయదు.",
+    voiceAccessDenied: "మైక్రోఫోన్ అనుమతి నిరాకరించబడింది."
   },
   "বাংলা": {
     welcome: "স্বাগতম,",
