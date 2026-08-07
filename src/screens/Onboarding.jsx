@@ -135,7 +135,11 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
       const res = await fetch(`${apiBase}/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone_or_email: destination })
+        body: JSON.stringify({ 
+          phone_or_email: destination,
+          phone: phone || '',
+          email: email || ''
+        })
       });
       const data = await res.json();
       if (data.status === 'success') {

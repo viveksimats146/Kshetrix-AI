@@ -66,6 +66,8 @@ export default function App() {
           setProfileName(data.name);
           setProfileState(data.state);
           setProfileDistrict(data.district);
+          if (data.email) setSignupEmail(data.email);
+          if (data.phone) setSignupPhone(data.phone);
           return;
         }
       } catch (err) {
@@ -103,6 +105,14 @@ export default function App() {
     localStorage.setItem('agrico_profile_district', profileDistrict);
   }, [profileDistrict]);
 
+  useEffect(() => {
+    localStorage.setItem('agrico_profile_phone', signupPhone);
+  }, [signupPhone]);
+
+  useEffect(() => {
+    localStorage.setItem('agrico_profile_email', signupEmail);
+  }, [signupEmail]);
+
   const handleSaveProfile = async (targetScreen) => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
@@ -111,7 +121,9 @@ export default function App() {
         id: profileId || null,
         name: profileName,
         state: profileState,
-        district: profileDistrict
+        district: profileDistrict,
+        email: signupEmail || (loginPhoneOrEmail.includes('@') ? loginPhoneOrEmail : ''),
+        phone: signupPhone || (loginPhoneOrEmail.includes('@') ? '' : loginPhoneOrEmail)
       };
 
       const res = await fetch(`${apiBase}/save-profile`, {

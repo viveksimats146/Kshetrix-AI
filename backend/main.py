@@ -47,6 +47,9 @@ def init_supabase_db():
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
         );
 
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone TEXT;
+
         -- Enable Row Level Security (RLS)
         ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
         
@@ -169,6 +172,8 @@ def get_db_connection():
 
 class OTPRequest(BaseModel):
     phone_or_email: str
+    phone: Optional[str] = None
+    email: Optional[str] = None
 
 class OTPVerifyRequest(BaseModel):
     phone_or_email: str
@@ -179,6 +184,8 @@ class ProfileSaveRequest(BaseModel):
     name: str
     state: str
     district: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 class SchemeApplicationRequest(BaseModel):
     profile_id: Optional[str] = None
@@ -197,61 +204,127 @@ otp_store = {}
 def send_otp(req: OTPRequest):
     otp = str(random.randint(1000, 9999))
     otp_store[req.phone_or_email] = otp
-    print(f"Generated OTP {otp} for {req.phone_or_email}")
     
-    if "@" in req.phone_or_email:
+    email = req.email
+    phone = req.phone
+    
+    if not email and not phone:
+        if "@" in req.phone_or_email:
+            email = req.phone_or_email
+            otp_store[email] = otp
+            conn = get_db_connection()
+            if conn:
+                try:
+                    cur = conn.cursor()
+                    cur.execute("SELECT phone FROM public.profiles WHERE email = %s LIMIT 1", (email,))
+                    row = cur.fetchone()
+                    if row and row[0]:
+                        phone = row[0]
+                        otp_store[phone] = otp
+                    cur.close()
+                    conn.close()
+                except Exception as e:
+                    print(f"Error looking up phone: {e}")
+        else:
+            phone = req.phone_or_email
+            otp_store[phone] = otp
+            conn = get_db_connection()
+            if conn:
+                try:
+                    cur = conn.cursor()
+                    cur.execute("SELECT email FROM public.profiles WHERE phone = %s LIMIT 1", (phone,))
+                    row = cur.fetchone()
+                    if row and row[0]:
+                        email = row[0]
+                        otp_store[email] = otp
+                    cur.close()
+                    conn.close()
+                except Exception as e:
+                    print(f"Error looking up email: {e}")
+    else:
+        if email:
+            otp_store[email] = otp
+        if phone:
+            otp_store[phone] = otp
+
+    print(f"Generated OTP {otp} for phone: {phone}, email: {email}")
+    
+    email_success = False
+    sms_success = False
+    channels_attempted = []
+    
+    if email:
+        channels_attempted.append("email")
         smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
         smtp_port = int(os.environ.get("SMTP_PORT", 587))
         smtp_user = os.environ.get("SMTP_USER")
         smtp_password = os.environ.get("SMTP_PASSWORD")
         sender_email = os.environ.get("SENDER_EMAIL", smtp_user)
         
-        if not smtp_user or not smtp_password:
-            print("WARNING: SMTP_USER or SMTP_PASSWORD not set. Cannot send real email.")
-            return {"status": "success", "message": "OTP generated (Simulation mode)", "code": otp}
+        if smtp_user and smtp_password:
+            try:
+                msg = MIMEMultipart()
+                msg['From'] = sender_email
+                msg['To'] = email
+                msg['Subject'] = "Kshetrix-AI Verification Code"
+                
+                body = f"Welcome to Kshetrix-AI! Your verification code is: {otp}\n\nThis code will expire in 10 minutes."
+                msg.attach(MIMEText(body, 'plain'))
+                
+                server = smtplib.SMTP(smtp_host, smtp_port)
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(sender_email, email, msg.as_string())
+                server.quit()
+                print(f"Email sent successfully to {email}")
+                email_success = True
+            except Exception as e:
+                print(f"Error sending email: {e}")
+        else:
+            print("WARNING: SMTP credentials not set. Cannot send real email.")
             
-        try:
-            msg = MIMEMultipart()
-            msg['From'] = sender_email
-            msg['To'] = req.phone_or_email
-            msg['Subject'] = "Kshetrix-AI Verification Code"
-            
-            body = f"Welcome to Kshetrix-AI! Your verification code is: {otp}\n\nThis code will expire in 10 minutes."
-            msg.attach(MIMEText(body, 'plain'))
-            
-            server = smtplib.SMTP(smtp_host, smtp_port)
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.sendmail(sender_email, req.phone_or_email, msg.as_string())
-            server.quit()
-            print(f"Email sent successfully to {req.phone_or_email}")
-        except Exception as e:
-            print(f"Error sending email: {e}")
-            return {"status": "error", "message": f"Failed to send email: {str(e)}"}
-            
-    else:
+    if phone:
+        channels_attempted.append("sms")
         twilio_sid = os.environ.get("TWILIO_ACCOUNT_SID")
         twilio_auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
         twilio_phone = os.environ.get("TWILIO_PHONE_NUMBER")
         
-        if not twilio_sid or not twilio_auth_token or not twilio_phone:
+        if twilio_sid and twilio_auth_token and twilio_phone:
+            try:
+                formatted_phone = phone if phone.startswith('+') else f"+91{phone}"
+                from twilio.rest import Client
+                client = Client(twilio_sid, twilio_auth_token)
+                message = client.messages.create(
+                    body=f"Your Kshetrix-AI verification code is: {otp}",
+                    from_=twilio_phone,
+                    to=formatted_phone
+                )
+                print(f"SMS sent successfully to {formatted_phone}, SID: {message.sid}")
+                sms_success = True
+            except Exception as e:
+                print(f"Error sending SMS: {e}")
+        else:
             print("WARNING: Twilio credentials not set. Cannot send real SMS.")
-            return {"status": "success", "message": "OTP generated (Simulation mode)", "code": otp}
             
-        try:
-            from twilio.rest import Client
-            client = Client(twilio_sid, twilio_auth_token)
-            message = client.messages.create(
-                body=f"Your Kshetrix-AI verification code is: {otp}",
-                from_=twilio_phone,
-                to=req.phone_or_email if req.phone_or_email.startswith('+') else f"+91{req.phone_or_email}"
-            )
-            print(f"SMS sent successfully to {req.phone_or_email}, SID: {message.sid}")
-        except Exception as e:
-            print(f"Error sending SMS: {e}")
-            return {"status": "error", "message": f"Failed to send SMS: {str(e)}"}
-            
-    return {"status": "success", "message": "OTP sent successfully."}
+    real_channels_sent = []
+    if email_success:
+        real_channels_sent.append("email")
+    if sms_success:
+        real_channels_sent.append("sms")
+        
+    if len(real_channels_sent) > 0:
+        return {
+            "status": "success", 
+            "message": f"OTP sent via {', '.join(real_channels_sent)}.",
+            "channels": real_channels_sent
+        }
+    else:
+        return {
+            "status": "success", 
+            "message": "OTP generated (Simulation mode)", 
+            "code": otp,
+            "channels": channels_attempted
+        }
 
 @app.post("/verify-otp")
 def verify_otp(req: OTPVerifyRequest):
@@ -275,8 +348,8 @@ def save_profile(req: ProfileSaveRequest):
             exists = cur.fetchone()
             if exists:
                 cur.execute(
-                    "UPDATE public.profiles SET name = %s, state = %s, district = %s, updated_at = NOW() WHERE id = %s",
-                    (req.name, req.state, req.district, profile_id)
+                    "UPDATE public.profiles SET name = %s, state = %s, district = %s, email = %s, phone = %s, updated_at = NOW() WHERE id = %s",
+                    (req.name, req.state, req.district, req.email, req.phone, profile_id)
                 )
             else:
                 profile_id = None
@@ -285,8 +358,8 @@ def save_profile(req: ProfileSaveRequest):
             import uuid
             new_id = str(uuid.uuid4())
             cur.execute(
-                "INSERT INTO public.profiles (id, name, state, district) VALUES (%s, %s, %s, %s)",
-                (new_id, req.name, req.state, req.district)
+                "INSERT INTO public.profiles (id, name, state, district, email, phone) VALUES (%s, %s, %s, %s, %s, %s)",
+                (new_id, req.name, req.state, req.district, req.email, req.phone)
             )
             profile_id = new_id
             
@@ -307,12 +380,12 @@ def get_profile(id: str):
         
     try:
         cur = conn.cursor()
-        cur.execute("SELECT id, name, state, district FROM public.profiles WHERE id = %s", (id,))
+        cur.execute("SELECT id, name, state, district, email, phone FROM public.profiles WHERE id = %s", (id,))
         row = cur.fetchone()
         cur.close()
         conn.close()
         if row:
-            return {"id": row[0], "name": row[1], "state": row[2], "district": row[3]}
+            return {"id": row[0], "name": row[1], "state": row[2], "district": row[3], "email": row[4], "phone": row[5]}
         raise HTTPException(status_code=404, detail="Profile not found.")
     except Exception as e:
         print(f"Error in get_profile: {e}")
