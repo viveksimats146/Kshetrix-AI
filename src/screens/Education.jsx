@@ -2,8 +2,8 @@ import React from 'react';
 import { ChevronLeft, Play, BookOpen, Calendar, Bug, Video } from 'lucide-react';
 
 const Header = ({ title, onBack }) => (
-  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'white', borderBottom: '1px solid var(--gray-light)' }}>
-    <button onClick={onBack} style={{ background: 'white', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)', borderBottom: '1px solid var(--gray-light)' }}>
+    <button onClick={onBack} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
       <ChevronLeft />
     </button>
     <h2 style={{ fontSize: '18px' }}>{title}</h2>
@@ -11,7 +11,7 @@ const Header = ({ title, onBack }) => (
 );
 
 export const VideoTutorials = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Agri Academy (Videos)" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       {[
@@ -38,7 +38,7 @@ export const VideoTutorials = ({ onBack }) => (
 );
 
 export const ArticleReader = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Agri Guides" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       <div className="card" style={{ padding: '25px 20px', marginBottom: '20px' }}>
@@ -59,7 +59,7 @@ export const ArticleReader = ({ onBack }) => (
 );
 
 export const CropCalendar = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Crop Calendar" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -98,14 +98,14 @@ export const CropCalendar = ({ onBack }) => (
 );
 
 export const PestIdentification = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Pest Identification" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
       <div style={{ background: 'var(--primary)', color: 'white', padding: '25px', borderRadius: '16px', textAlign: 'center', marginBottom: '25px' }}>
         <Bug size={48} style={{ margin: '0 auto 15px' }} />
         <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '10px' }}>AI Plant Doctor</h3>
         <p style={{ fontSize: '14px', opacity: 0.9, marginBottom: '20px' }}>Take a photo of a diseased leaf and our AI will identify the pest instantly.</p>
-        <button style={{ background: 'white', color: 'var(--primary)', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '700', width: '100%' }}>Open Camera</button>
+        <button style={{ background: 'var(--white)', color: 'var(--primary)', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: '700', width: '100%' }}>Open Camera</button>
       </div>
 
       <h4 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '15px' }}>Common Pests (Onion)</h4>

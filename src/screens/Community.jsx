@@ -2,8 +2,8 @@ import React from 'react';
 import { ChevronLeft, MessageSquare, ThumbsUp, Share2, Award, Clock } from 'lucide-react';
 
 const Header = ({ title, onBack }) => (
-  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'white', borderBottom: '1px solid var(--gray-light)' }}>
-    <button onClick={onBack} style={{ background: 'white', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)', borderBottom: '1px solid var(--gray-light)' }}>
+    <button onClick={onBack} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
       <ChevronLeft />
     </button>
     <h2 style={{ fontSize: '18px' }}>{title}</h2>
@@ -11,7 +11,7 @@ const Header = ({ title, onBack }) => (
 );
 
 export const FarmerForum = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Farmer Forum" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       {[
@@ -37,7 +37,7 @@ export const FarmerForum = ({ onBack }) => (
 );
 
 export const ExpertQA = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Ask the Experts" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       <div style={{ background: 'var(--primary-pale)', padding: '15px', borderRadius: '12px', display: 'flex', gap: '15px', marginBottom: '20px' }}>
@@ -57,7 +57,7 @@ export const ExpertQA = ({ onBack }) => (
 );
 
 export const SuccessStories = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Success Stories" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       {[
@@ -80,7 +80,7 @@ export const SuccessStories = ({ onBack }) => (
 );
 
 export const MarketNewsFeed = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Market News" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       {[

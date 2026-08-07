@@ -2,8 +2,8 @@ import React from 'react';
 import { ChevronLeft, IndianRupee, ShieldCheck, PieChart, FileText, TrendingUp, AlertTriangle } from 'lucide-react';
 
 const Header = ({ title, onBack }) => (
-  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'white', borderBottom: '1px solid var(--gray-light)' }}>
-    <button onClick={onBack} style={{ background: 'white', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)', borderBottom: '1px solid var(--gray-light)' }}>
+    <button onClick={onBack} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
       <ChevronLeft />
     </button>
     <h2 style={{ fontSize: '18px' }}>{title}</h2>
@@ -11,13 +11,13 @@ const Header = ({ title, onBack }) => (
 );
 
 export const LoanApplication = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Agri Loans" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       <div style={{ background: 'var(--primary)', color: 'white', padding: '20px', borderRadius: '16px', marginBottom: '25px' }}>
         <p style={{ fontSize: '14px', opacity: 0.9, marginBottom: '5px' }}>Pre-approved Limit</p>
         <h2 style={{ fontSize: '32px', fontWeight: '800', marginBottom: '15px' }}>₹ 1,50,000</h2>
-        <button style={{ background: 'white', color: 'var(--primary)', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: '700', fontSize: '14px' }}>Apply Now</button>
+        <button style={{ background: 'var(--white)', color: 'var(--primary)', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: '700', fontSize: '14px' }}>Apply Now</button>
       </div>
 
       <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '15px' }}>Active Loans</h3>
@@ -45,7 +45,7 @@ export const LoanApplication = ({ onBack }) => (
 );
 
 export const ExpenseTracker = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Farm Expenses" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -84,7 +84,7 @@ export const ExpenseTracker = ({ onBack }) => (
 );
 
 export const RevenueDashboard = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Revenue Overview" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
       <PieChart color="var(--primary)" size={64} style={{ marginBottom: '20px', opacity: 0.5 }} />
@@ -96,7 +96,7 @@ export const RevenueDashboard = ({ onBack }) => (
 );
 
 export const InsuranceStatus = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Crop Insurance" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       <div className="card" style={{ background: 'var(--info-pale)', border: '1px solid var(--info)', marginBottom: '20px' }}>
@@ -125,7 +125,7 @@ export const InsuranceStatus = ({ onBack }) => (
         </div>
       </div>
 
-      <button style={{ width: '100%', padding: '16px', borderRadius: '12px', border: '1px solid var(--error)', color: 'var(--error)', background: 'white', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+      <button style={{ width: '100%', padding: '16px', borderRadius: '12px', border: '1px solid var(--error)', color: 'var(--error)', background: 'var(--white)', fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
         <AlertTriangle size={18} /> File a Claim
       </button>
     </div>

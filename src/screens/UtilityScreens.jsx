@@ -247,11 +247,36 @@ export const GovtSchemes = ({ onBack }) => {
   const [submitting, setSubmitting] = useState(false);
   const [successApply, setSuccessApply] = useState(false);
 
-  // Load existing applications from Supabase on mount
+
+  // Load existing applications from database on mount
   useEffect(() => {
     const loadApplications = async () => {
       const profileId = localStorage.getItem('agrico_profile_id');
       if (!profileId) return;
+      try {
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+        const res = await fetch(`${apiBase}/get-schemes?profile_id=${profileId}`);
+        if (!res.ok) throw new Error("Backend schemes fetch failed");
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setSchemes(prev => prev.map(s => {
+            const match = data.find(d => d.scheme_name === s.name);
+            if (match) {
+              return { 
+                ...s, 
+                status: match.status === 'Under Review' ? 'Applied / Review' : match.status,
+                color: match.status === 'Under Review' ? 'var(--warning)' : 'var(--success)'
+              };
+            }
+            return s;
+          }));
+          return;
+        }
+      } catch (err) {
+        console.warn("Failed to load scheme applications from backend, calling Supabase client fallback:", err.message);
+      }
+
+      // Fallback: client-side Supabase query
       try {
         const { data, error } = await supabase
           .from('scheme_applications')
@@ -272,7 +297,7 @@ export const GovtSchemes = ({ onBack }) => {
           }));
         }
       } catch (err) {
-        console.warn("Failed to load scheme applications from Supabase:", err.message);
+        console.warn("Failed fallback loading schemes from Supabase:", err.message);
       }
     };
     loadApplications();
@@ -312,10 +337,13 @@ export const GovtSchemes = ({ onBack }) => {
     const appTrackingId = `KSH-SCH-2026-${Math.floor(10000 + Math.random() * 90000)}`;
     const profileId = localStorage.getItem('agrico_profile_id');
     
+    // Save to backend database
     try {
-      const { error } = await supabase
-        .from('scheme_applications')
-        .insert([{
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const res = await fetch(`${apiBase}/apply-scheme`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           profile_id: profileId || null,
           scheme_name: showApplyForm.name,
           farmer_name: formInputs.farmerName,
@@ -324,19 +352,39 @@ export const GovtSchemes = ({ onBack }) => {
           survey_number: formInputs.surveyNo,
           bank_account: formInputs.bankAccount,
           ifsc: formInputs.ifsc.toUpperCase(),
-          tracking_id: appTrackingId,
-          status: 'Under Review'
-        }]);
-      if (error) throw error;
+          tracking_id: appTrackingId
+        })
+      });
+      if (!res.ok) throw new Error("Backend apply-scheme request failed");
     } catch (err) {
-      console.warn("Failed saving application to Supabase, continuing locally:", err.message);
+      console.warn("Failed saving application to backend, calling Supabase fallback:", err.message);
+      
+      // Fallback: save using Supabase Client
+      try {
+        const { error } = await supabase
+          .from('scheme_applications')
+          .insert([{
+            profile_id: profileId || null,
+            scheme_name: showApplyForm.name,
+            farmer_name: formInputs.farmerName,
+            aadhaar: formInputs.aadhaar,
+            land_area: Number(formInputs.landArea),
+            survey_number: formInputs.surveyNo,
+            bank_account: formInputs.bankAccount,
+            ifsc: formInputs.ifsc.toUpperCase(),
+            tracking_id: appTrackingId,
+            status: 'Under Review'
+          }]);
+        if (error) throw error;
+      } catch (e2) {
+        console.warn("Failed fallback saving application to Supabase:", e2.message);
+      }
     }
 
     setTrackingId(appTrackingId);
     setSubmitting(false);
     setSuccessApply(true);
     
-    // Update scheme status
     setSchemes(prev => prev.map(s => {
       if (s.id === showApplyForm.id) {
         return { ...s, status: "Applied / Review", color: "var(--warning)" };

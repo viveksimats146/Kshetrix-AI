@@ -19,7 +19,7 @@ export const PredictionInput = ({
   onPredict, 
   onBack, 
   currentLang, 
-  formData = { state: '', district: '', commodity: '', date: '2026-06-15' }, 
+  formData = { state: '', district: '', commodity: '', date: new Date().toISOString().split('T')[0] }, 
   setFormData = () => {} 
 }) => {
   const [loading, setLoading] = useState(false);
@@ -359,7 +359,10 @@ export const PredictionResult = ({ result, onBack, onDetails, currentLang }) => 
         <div className="card" style={{ padding: '30px 20px', textAlign: 'center', marginBottom: '20px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: '-20px', right: '-20px', opacity: 0.05 }}><TrendingUp size={150} /></div>
           <p style={{ fontSize: '14px', color: 'var(--gray-medium)', fontWeight: '600', marginBottom: '10px' }}>{translate('predictedPrice', currentLang)}</p>
-          <h1 style={{ fontSize: '48px', fontWeight: '800', color: 'var(--primary)', marginBottom: '10px' }}>₹{avgPrice}</h1>
+          <h1 style={{ fontSize: '48px', fontWeight: '800', color: 'var(--primary)', marginBottom: '5px' }}>₹{avgPrice}</h1>
+          <p style={{ fontSize: '14px', color: 'var(--gray-dark)', fontWeight: '700', marginBottom: '15px' }}>
+            ({translate('or', currentLang)} ₹{(Number(avgPrice) / 100).toFixed(2)} / kg)
+          </p>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'var(--success-pale)', color: 'var(--success)', padding: '6px 12px', borderRadius: '20px', fontSize: '13px', fontWeight: '700' }}>
             <TrendingUp size={14} /> +12% {currentLang === 'हिंदी' ? 'पिछले महीने की तुलना में' : currentLang === 'తెలుగు' ? 'గత నెలతో పోలిస్తే' : currentLang === 'मराठी' ? 'मागील महिन्याच्या तुलनेत' : 'vs last month'}
           </div>

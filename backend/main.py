@@ -3,6 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from ml_engine import AgricoML
 import os
+import random
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from typing import List, Optional
 
 app = FastAPI(title="Kshetrix-AI API")
 
@@ -148,6 +153,213 @@ def get_meta_data_filtered(state: str = None, district: str = None):
 @app.get("/dashboard-summary")
 def get_dashboard_summary():
     return agrico.get_dashboard_summary()
+
+def get_db_connection():
+    db_url = os.environ.get("DATABASE_URL")
+    if not db_url:
+        print("DATABASE_URL not set in environment.")
+        return None
+    import psycopg2
+    try:
+        conn = psycopg2.connect(db_url)
+        return conn
+    except Exception as e:
+        print(f"Error connecting to database: {e}")
+        return None
+
+class OTPRequest(BaseModel):
+    phone_or_email: str
+
+class OTPVerifyRequest(BaseModel):
+    phone_or_email: str
+    code: str
+
+class ProfileSaveRequest(BaseModel):
+    id: Optional[str] = None
+    name: str
+    state: str
+    district: str
+
+class SchemeApplicationRequest(BaseModel):
+    profile_id: Optional[str] = None
+    scheme_name: str
+    farmer_name: str
+    aadhaar: str
+    land_area: float
+    survey_number: str
+    bank_account: str
+    ifsc: str
+    tracking_id: str
+
+otp_store = {}
+
+@app.post("/send-otp")
+def send_otp(req: OTPRequest):
+    otp = str(random.randint(1000, 9999))
+    otp_store[req.phone_or_email] = otp
+    print(f"Generated OTP {otp} for {req.phone_or_email}")
+    
+    if "@" in req.phone_or_email:
+        smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+        smtp_port = int(os.environ.get("SMTP_PORT", 587))
+        smtp_user = os.environ.get("SMTP_USER")
+        smtp_password = os.environ.get("SMTP_PASSWORD")
+        sender_email = os.environ.get("SENDER_EMAIL", smtp_user)
+        
+        if not smtp_user or not smtp_password:
+            print("WARNING: SMTP_USER or SMTP_PASSWORD not set. Cannot send real email.")
+            return {"status": "success", "message": "OTP generated (Simulation mode)", "code": otp}
+            
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = sender_email
+            msg['To'] = req.phone_or_email
+            msg['Subject'] = "Kshetrix-AI Verification Code"
+            
+            body = f"Welcome to Kshetrix-AI! Your verification code is: {otp}\n\nThis code will expire in 10 minutes."
+            msg.attach(MIMEText(body, 'plain'))
+            
+            server = smtplib.SMTP(smtp_host, smtp_port)
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.sendmail(sender_email, req.phone_or_email, msg.as_string())
+            server.quit()
+            print(f"Email sent successfully to {req.phone_or_email}")
+        except Exception as e:
+            print(f"Error sending email: {e}")
+            return {"status": "error", "message": f"Failed to send email: {str(e)}"}
+            
+    else:
+        twilio_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+        twilio_auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+        twilio_phone = os.environ.get("TWILIO_PHONE_NUMBER")
+        
+        if not twilio_sid or not twilio_auth_token or not twilio_phone:
+            print("WARNING: Twilio credentials not set. Cannot send real SMS.")
+            return {"status": "success", "message": "OTP generated (Simulation mode)", "code": otp}
+            
+        try:
+            from twilio.rest import Client
+            client = Client(twilio_sid, twilio_auth_token)
+            message = client.messages.create(
+                body=f"Your Kshetrix-AI verification code is: {otp}",
+                from_=twilio_phone,
+                to=req.phone_or_email if req.phone_or_email.startswith('+') else f"+91{req.phone_or_email}"
+            )
+            print(f"SMS sent successfully to {req.phone_or_email}, SID: {message.sid}")
+        except Exception as e:
+            print(f"Error sending SMS: {e}")
+            return {"status": "error", "message": f"Failed to send SMS: {str(e)}"}
+            
+    return {"status": "success", "message": "OTP sent successfully."}
+
+@app.post("/verify-otp")
+def verify_otp(req: OTPVerifyRequest):
+    stored_otp = otp_store.get(req.phone_or_email)
+    if stored_otp and stored_otp == req.code:
+        del otp_store[req.phone_or_email]
+        return {"status": "success", "message": "OTP verified successfully."}
+    return {"status": "error", "message": "Invalid verification code."}
+
+@app.post("/save-profile")
+def save_profile(req: ProfileSaveRequest):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed.")
+    
+    try:
+        cur = conn.cursor()
+        profile_id = req.id
+        if profile_id:
+            cur.execute("SELECT id FROM public.profiles WHERE id = %s", (profile_id,))
+            exists = cur.fetchone()
+            if exists:
+                cur.execute(
+                    "UPDATE public.profiles SET name = %s, state = %s, district = %s, updated_at = NOW() WHERE id = %s",
+                    (req.name, req.state, req.district, profile_id)
+                )
+            else:
+                profile_id = None
+                
+        if not profile_id:
+            import uuid
+            new_id = str(uuid.uuid4())
+            cur.execute(
+                "INSERT INTO public.profiles (id, name, state, district) VALUES (%s, %s, %s, %s)",
+                (new_id, req.name, req.state, req.district)
+            )
+            profile_id = new_id
+            
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {"status": "success", "id": profile_id}
+    except Exception as e:
+        conn.rollback()
+        print(f"Error in save_profile: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save profile: {str(e)}")
+
+@app.get("/get-profile")
+def get_profile(id: str):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed.")
+        
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id, name, state, district FROM public.profiles WHERE id = %s", (id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if row:
+            return {"id": row[0], "name": row[1], "state": row[2], "district": row[3]}
+        raise HTTPException(status_code=404, detail="Profile not found.")
+    except Exception as e:
+        print(f"Error in get_profile: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch profile: {str(e)}")
+
+@app.post("/apply-scheme")
+def apply_scheme(req: SchemeApplicationRequest):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed.")
+        
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """INSERT INTO public.scheme_applications 
+            (profile_id, scheme_name, farmer_name, aadhaar, land_area, survey_number, bank_account, ifsc, tracking_id, status)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'Under Review')""",
+            (req.profile_id, req.scheme_name, req.farmer_name, req.aadhaar, req.land_area, req.survey_number, req.bank_account, req.ifsc, req.tracking_id)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": "Scheme application submitted."}
+    except Exception as e:
+        conn.rollback()
+        print(f"Error in apply_scheme: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to submit scheme application: {str(e)}")
+
+@app.get("/get-schemes")
+def get_schemes(profile_id: str):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed.")
+        
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT scheme_name, status, tracking_id FROM public.scheme_applications WHERE profile_id = %s",
+            (profile_id,)
+        )
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        return [{"scheme_name": r[0], "status": r[1], "tracking_id": r[2]} for r in rows]
+    except Exception as e:
+        print(f"Error in get_schemes: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch scheme applications: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

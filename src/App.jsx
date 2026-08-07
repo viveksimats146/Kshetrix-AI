@@ -30,7 +30,7 @@ import {
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('splash');
   const [predictionResult, setPredictionResult] = useState(null);
-  const [formData, setFormData] = useState({ state: 'Maharashtra', district: 'Nashik', commodity: 'Onion', date: '2026-06-15' });
+  const [formData, setFormData] = useState({ state: 'Maharashtra', district: 'Nashik', commodity: 'Onion', date: new Date().toISOString().split('T')[0] });
   const [theme, setTheme] = useState(localStorage.getItem('agrico_theme') || 'green');
   const [language, setLanguage] = useState(localStorage.getItem('agrico_lang') || 'English');
   const [profileName, setProfileName] = useState(localStorage.getItem('agrico_profile_name') || 'Ramesh Kumar');
@@ -52,11 +52,26 @@ export default function App() {
     localStorage.setItem('agrico_lang', language);
   }, [language]);
 
-  // Load profile from Supabase on mount
+  // Load profile from database on mount
   useEffect(() => {
     const loadProfile = async () => {
       const profileId = localStorage.getItem('agrico_profile_id');
       if (!profileId) return;
+      try {
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+        const res = await fetch(`${apiBase}/get-profile?id=${profileId}`);
+        if (!res.ok) throw new Error("Backend profile fetch failed");
+        const data = await res.json();
+        if (data && data.name) {
+          setProfileName(data.name);
+          setProfileState(data.state);
+          setProfileDistrict(data.district);
+          return;
+        }
+      } catch (err) {
+        console.warn("Failed to load profile from backend database, calling Supabase client fallback:", err.message);
+      }
+
       try {
         const { data, error } = await supabase
           .from('profiles')
@@ -70,7 +85,7 @@ export default function App() {
           setProfileDistrict(data.district);
         }
       } catch (err) {
-        console.warn("Failed to load profile from Supabase:", err.message);
+        console.warn("Failed fallback loading profile from Supabase:", err.message);
       }
     };
     loadProfile();
@@ -90,32 +105,54 @@ export default function App() {
 
   const handleSaveProfile = async (targetScreen) => {
     try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
       const profileId = localStorage.getItem('agrico_profile_id');
       const payload = {
+        id: profileId || null,
         name: profileName,
         state: profileState,
-        district: profileDistrict,
-        updated_at: new Date().toISOString()
+        district: profileDistrict
       };
 
-      if (profileId) {
-        const { error } = await supabase
-          .from('profiles')
-          .update(payload)
-          .eq('id', profileId);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from('profiles')
-          .insert([payload])
-          .select();
-        if (error) throw error;
-        if (data && data.length > 0) {
-          localStorage.setItem('agrico_profile_id', data[0].id);
-        }
+      const res = await fetch(`${apiBase}/save-profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.status === 'success' && data.id) {
+        localStorage.setItem('agrico_profile_id', data.id);
       }
     } catch (e) {
-      console.warn("Failed saving profile to Supabase, continuing locally:", e.message);
+      console.warn("Failed saving profile to backend database, calling Supabase client as fallback:", e.message);
+      try {
+        const profileId = localStorage.getItem('agrico_profile_id');
+        const payload = {
+          name: profileName,
+          state: profileState,
+          district: profileDistrict,
+          updated_at: new Date().toISOString()
+        };
+
+        if (profileId) {
+          const { error } = await supabase
+            .from('profiles')
+            .update(payload)
+            .eq('id', profileId);
+          if (error) throw error;
+        } else {
+          const { data, error } = await supabase
+            .from('profiles')
+            .insert([payload])
+            .select();
+          if (error) throw error;
+          if (data && data.length > 0) {
+            localStorage.setItem('agrico_profile_id', data[0].id);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed fallback saving profile to Supabase:", err.message);
+      }
     }
     navigate(targetScreen);
   };
@@ -263,7 +300,7 @@ export default function App() {
       case 'profile': return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button onClick={() => navigate('dashboard')} style={{ background: 'white', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+            <button onClick={() => navigate('dashboard')} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </button>
             <h2 style={{ fontSize: '18px' }}>My Profile</h2>
@@ -285,7 +322,7 @@ export default function App() {
       default: return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button onClick={() => navigate('dashboard')} style={{ background: 'white', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+            <button onClick={() => navigate('dashboard')} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </button>
             <h2 style={{ fontSize: '18px' }}>Optimization</h2>
@@ -309,7 +346,7 @@ export default function App() {
 
     return (
       <div style={{ 
-        position: 'absolute', bottom: 0, width: '100%', background: 'rgba(255, 255, 255, 0.9)', 
+        position: 'absolute', bottom: 0, width: '100%', background: 'var(--white)', 
         backdropFilter: 'blur(10px)', display: 'flex', justifyContent: 'space-around', 
         padding: '10px 0 calc(10px + env(safe-area-inset-bottom, 15px))', 
         borderTop: '1px solid var(--gray-light)', zIndex: 1000,

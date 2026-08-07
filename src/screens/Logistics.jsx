@@ -2,8 +2,8 @@ import React from 'react';
 import { ChevronLeft, Truck, Snowflake, Package, Navigation, PhoneCall, Star } from 'lucide-react';
 
 const Header = ({ title, onBack }) => (
-  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'white', borderBottom: '1px solid var(--gray-light)' }}>
-    <button onClick={onBack} style={{ background: 'white', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)', borderBottom: '1px solid var(--gray-light)' }}>
+    <button onClick={onBack} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
       <ChevronLeft />
     </button>
     <h2 style={{ fontSize: '18px' }}>{title}</h2>
@@ -11,7 +11,7 @@ const Header = ({ title, onBack }) => (
 );
 
 export const TransportFinder = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Find Transport" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       <div className="card" style={{ padding: '15px', marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center', background: 'var(--primary)', color: 'white' }}>
@@ -48,7 +48,7 @@ export const TransportFinder = ({ onBack }) => (
 );
 
 export const ColdStorageFinder = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Cold Storage Centers" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       {[
@@ -75,7 +75,7 @@ export const ColdStorageFinder = ({ onBack }) => (
 );
 
 export const InventoryManager = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="My Inventory" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -100,7 +100,7 @@ export const InventoryManager = ({ onBack }) => (
 );
 
 export const OrderTracking = ({ onBack }) => (
-  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: '#F8F9FA' }}>
+  <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <Header title="Track Shipments" onBack={onBack} />
     <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
       <div className="card" style={{ padding: '20px' }}>

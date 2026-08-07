@@ -8,7 +8,7 @@ export const SplashScreen = ({ onNext }) => {
   return (
     <div style={{ 
       height: '100%', 
-      background: 'linear-gradient(135deg, #FFFFFF 0%, #E8F7EC 50%, #D8F3DC 100%)', 
+      background: 'linear-gradient(135deg, var(--white) 0%, var(--off-white) 50%, var(--primary-pale) 100%)', 
       color: 'var(--black)', 
       display: 'flex', 
       flexDirection: 'column', 
@@ -20,20 +20,34 @@ export const SplashScreen = ({ onNext }) => {
       overflow: 'hidden'
     }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-        <motion.img 
-          src={logoImg} 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          style={{ 
-            width: '100%', 
-            maxWidth: '480px', 
-            height: 'auto',
-            objectFit: 'contain',
-            mixBlendMode: 'multiply',
-            padding: '10px'
+          style={{
+            background: '#FFFFFF',
+            padding: '24px',
+            borderRadius: '32px',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.08)',
+            maxWidth: '320px',
+            width: '80%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
-        />
+        >
+          <img 
+            src={logoImg} 
+            alt="Agrico Logo" 
+            style={{ 
+              width: '100%', 
+              height: 'auto',
+              objectFit: 'contain',
+              mixBlendMode: 'multiply',
+              display: 'block'
+            }}
+          />
+        </motion.div>
       </div>
 
       <motion.div 
@@ -69,9 +83,9 @@ export const SplashScreen = ({ onNext }) => {
 import { ChevronLeft } from 'lucide-react';
 
 export const WelcomeScreen = ({ onNext, onLogin, onBack }) => (
-  <div style={{ height: '100%', background: 'white', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+  <div style={{ height: '100%', background: 'var(--white)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
     {onBack && (
-      <button onClick={onBack} style={{ position: 'absolute', top: '20px', left: '20px', background: 'white', border: '1px solid var(--gray-light)', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)', zIndex: 10 }}>
+      <button onClick={onBack} style={{ position: 'absolute', top: '20px', left: '20px', background: 'var(--white)', border: '1px solid var(--gray-light)', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)', zIndex: 10 }}>
         <ChevronLeft size={20} />
       </button>
     )}

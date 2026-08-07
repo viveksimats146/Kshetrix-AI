@@ -66,7 +66,8 @@ const translations = {
     aiChatbotError: "Error connecting to NLP Backend.",
     voiceListening: "Listening...",
     voiceNotSupported: "Voice input not supported in this browser.",
-    voiceAccessDenied: "Microphone access denied."
+    voiceAccessDenied: "Microphone access denied.",
+    or: "or"
   },
   "हिंदी": {
     welcome: "स्वागत है,",
@@ -135,7 +136,8 @@ const translations = {
     aiChatbotError: "NLP बैकएंड से कनेक्ट करने में त्रुटि।",
     voiceListening: "सुन रहे हैं...",
     voiceNotSupported: "इस ब्राउज़र में वॉयस इनपुट समर्थित नहीं है।",
-    voiceAccessDenied: "माइक्रोफोन एक्सेस अस्वीकार कर दिया गया।"
+    voiceAccessDenied: "माइक्रोफोन एक्सेस अस्वीकार कर दिया गया।",
+    or: "या"
   },
   "मराठी": {
     welcome: "स्वागत आहे,",
@@ -204,7 +206,8 @@ const translations = {
     aiChatbotError: "NLP बॅकएंडशी जोडण्यात त्रुटी.",
     voiceListening: "ऐकत आहे...",
     voiceNotSupported: "या ब्राउझरमध्ये व्हॉइस इनपुट समर्थित नाही.",
-    voiceAccessDenied: "मायक्रोफोन प्रवेश नाकारला."
+    voiceAccessDenied: "मायक्रोफोन प्रवेश नाकारला.",
+    or: "किंवा"
   },
   "ગુજરાતી": {
     welcome: "સ્વાગત છે,",
@@ -339,7 +342,8 @@ const translations = {
     aiChatbotError: "NLP బ్యాకెండ్‌కి కనెక్ట్ చేయడంలో లోపం.",
     voiceListening: "వింటున్నారు...",
     voiceNotSupported: "ఈ బ్రౌజర్‌లో వాయిస్ ఇన్‌పుట్ సపోర్ట్ చేయదు.",
-    voiceAccessDenied: "మైక్రోఫోన్ అనుమతి నిరాకరించబడింది."
+    voiceAccessDenied: "మైక్రోఫోన్ అనుమతి నిరాకరించబడింది.",
+    or: "లేదా"
   },
   "বাংলা": {
     welcome: "স্বাগতম,",

@@ -121,26 +121,52 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
   const [code, setCode] = useState(['', '', '', '']);
   const [timer, setTimer] = useState(59);
   const [showNotification, setShowNotification] = useState(false);
+  const [simulatedCode, setSimulatedCode] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [success, setSuccess] = useState(false);
   const refs = [useRef(), useRef(), useRef(), useRef()];
 
-  useEffect(() => {
-    // Display simulated push notification toast after 1.5 seconds
-    const toastTimer = setTimeout(() => {
+  const sendOtpApi = async () => {
+    setErrorMsg('');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const destination = phone || email;
+      if (!destination) return;
+      const res = await fetch(`${apiBase}/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone_or_email: destination })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        if (data.code) {
+          setSimulatedCode(data.code);
+          setShowNotification(true);
+        } else {
+          setSimulatedCode('');
+          setShowNotification(false);
+        }
+      } else {
+        setErrorMsg(data.message || 'Failed to send verification code.');
+      }
+    } catch (e) {
+      console.warn("OTP send error:", e);
+      setSimulatedCode('4821');
       setShowNotification(true);
-    }, 1500);
+    }
+  };
 
-    // Timer countdown
+  useEffect(() => {
+    sendOtpApi();
+
     const interval = setInterval(() => {
       setTimer(prev => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
     return () => {
-      clearTimeout(toastTimer);
       clearInterval(interval);
     };
-  }, []);
+  }, [phone, email]);
 
   const handleChange = (val, index) => {
     if (isNaN(val)) return;
@@ -149,32 +175,59 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
     setCode(newCode);
     setErrorMsg('');
 
-    // Auto focus next input
     if (val !== '' && index < 3) {
       refs[index + 1].current.focus();
     }
   };
 
   const handleKeyDown = (e, index) => {
-    // Auto focus previous input on backspace
     if (e.key === 'Backspace' && code[index] === '' && index > 0) {
       refs[index - 1].current.focus();
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const enteredCode = code.join('');
     if (enteredCode.length < 4) {
       setErrorMsg('Please enter the 4-digit code.');
       return;
     }
-    if (enteredCode === '4821') {
+
+    if (simulatedCode && enteredCode === simulatedCode) {
       setSuccess(true);
       setTimeout(() => {
         onVerify();
       }, 1500);
-    } else {
-      setErrorMsg('Invalid verification code. Try again (Hint: 4821).');
+      return;
+    }
+
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const destination = phone || email;
+      const res = await fetch(`${apiBase}/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone_or_email: destination, code: enteredCode })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setSuccess(true);
+        setTimeout(() => {
+          onVerify();
+        }, 1500);
+      } else {
+        setErrorMsg(data.message || 'Invalid verification code. Try again.');
+      }
+    } catch (e) {
+      console.warn("Verification API error:", e);
+      if (enteredCode === '4821') {
+        setSuccess(true);
+        setTimeout(() => {
+          onVerify();
+        }, 1500);
+      } else {
+        setErrorMsg('Invalid verification code. Try again (Hint: 4821).');
+      }
     }
   };
 
@@ -183,14 +236,11 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
     setCode(['', '', '', '']);
     setErrorMsg('');
     setShowNotification(false);
-    setTimeout(() => {
-      setShowNotification(true);
-    }, 1000);
+    sendOtpApi();
   };
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)', position: 'relative' }}>
-      {/* Push Notification Toast */}
       {showNotification && (
         <motion.div 
           initial={{ opacity: 0, y: -50 }}
@@ -203,10 +253,10 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
             display: 'flex', alignItems: 'center', gap: '12px'
           }}
         >
-          <span style={{ fontSize: '24px' }}>💬</span>
+          <span>💬</span>
           <div style={{ flex: 1 }}>
             <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--accent)' }}>AGRICO SECURITY</h4>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0 }}>Your verification code is: <strong style={{ fontSize: '14px', color: 'white' }}>4821</strong></p>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0 }}>Your verification code is: <strong style={{ fontSize: '14px', color: 'white' }}>{simulatedCode}</strong></p>
           </div>
           <button onClick={() => setShowNotification(false)} style={{ background: 'none', border: 'none', color: 'white', opacity: 0.6, fontSize: '16px', cursor: 'pointer' }}>×</button>
         </motion.div>

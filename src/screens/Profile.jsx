@@ -6,8 +6,8 @@ import { getStates, getDistricts } from '../services/mandiApi';
 import { getCropEmoji } from '../utils/cropHelper.js';
 
 const Header = ({ title, onBack }) => (
-  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'white' }}>
-    {onBack && <button onClick={onBack} style={{ background: 'white', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+  <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)' }}>
+    {onBack && <button onClick={onBack} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
       <ChevronLeft />
     </button>}
     <h2 style={{ fontSize: '18px' }}>{title}</h2>
@@ -130,7 +130,7 @@ export const CropPreferences = ({ onNext, onBack }) => {
   const toggle = c => setSelected(selected.includes(c) ? selected.filter(x => x !== c) : [...selected, c]);
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'white' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--white)' }}>
       <Header title="Crop Selection" onBack={onBack} />
       <div style={{ flex: 1, padding: '0 20px 20px', overflowY: 'auto' }}>
         <h3 style={{ fontSize: '24px', marginBottom: '10px', fontWeight: '800' }}>What do you grow?</h3>
@@ -164,8 +164,8 @@ export const CropPreferences = ({ onNext, onBack }) => {
                       fontSize: '14px', 
                       fontWeight: '600', 
                       border: selected.includes(c) ? 'none' : '1px solid var(--gray-light)', 
-                      background: selected.includes(c) ? 'var(--primary)' : 'white', 
-                      color: selected.includes(c) ? 'white' : 'var(--gray-dark)',
+                      background: selected.includes(c) ? 'var(--primary)' : 'var(--white)', 
+                      color: selected.includes(c) ? 'var(--white)' : 'var(--gray-dark)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',

@@ -74,6 +74,27 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+button {
+  color: var(--black);
+  font-family: inherit;
+}
+
+select, input, textarea {
+  color: var(--black);
+  background-color: var(--white);
+}
+
+select option {
+  background-color: var(--white);
+  color: var(--black);
+}
+
+::placeholder {
+  color: var(--gray-medium);
+  opacity: 0.8;
+}
+
+
 body {
   background-color: var(--white);
   color: var(--black);
