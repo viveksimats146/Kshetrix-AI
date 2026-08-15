@@ -96,6 +96,11 @@ export default function App() {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const [wallpaper, setWallpaper] = useState(localStorage.getItem('agrico_wallpaper') || 'none');
+  const [customWallpaper, setCustomWallpaper] = useState(localStorage.getItem('agrico_custom_wallpaper') || '');
+
+  useEffect(() => {
+    localStorage.setItem('agrico_custom_wallpaper', customWallpaper);
+  }, [customWallpaper]);
 
   useEffect(() => {
     localStorage.setItem('agrico_profile_photo', profilePhoto);
@@ -401,7 +406,7 @@ export default function App() {
       
       // Utilities
       case 'schemes': return <GovtSchemes onBack={goBack} />;
-      case 'settings': return <SettingsScreen onBack={goBack} theme={theme} setTheme={setTheme} wallpaper={wallpaper} setWallpaper={setWallpaper} onNavigate={navigate} language={language} />;
+      case 'settings': return <SettingsScreen onBack={goBack} theme={theme} setTheme={setTheme} wallpaper={wallpaper} setWallpaper={setWallpaper} customWallpaper={customWallpaper} setCustomWallpaper={setCustomWallpaper} onNavigate={navigate} language={language} />;
       case 'chatbot': return <AIChatbot onBack={goBack} currentLang={language} />;
       case 'alerts': return <WeatherDashboard onBack={goBack} state={formData.state} district={formData.district} commodity={formData.commodity} date={formData.date} />;
       

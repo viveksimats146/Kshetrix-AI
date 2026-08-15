@@ -740,7 +740,7 @@ export const AIChatbot = ({ onBack, currentLang = 'English' }) => {
   );
 };
 
-export const SettingsScreen = ({ onBack, theme, setTheme, wallpaper = 'none', setWallpaper, onNavigate, language }) => {
+export const SettingsScreen = ({ onBack, theme, setTheme, wallpaper = 'none', setWallpaper, customWallpaper = '', setCustomWallpaper, onNavigate, language }) => {
   const themes = [
     { id: 'classic', label: 'Classic', bg: '#2D6A4F', text: 'white' },
     { id: 'dark', label: 'Dark', bg: '#1E1E1E', text: '#52B788' },
@@ -760,24 +760,53 @@ export const SettingsScreen = ({ onBack, theme, setTheme, wallpaper = 'none', se
 
   const wallpapers = [
     { id: 'none', label: 'None', preview: '#CCCCCC' },
-    { id: 'forest', label: 'Forest', preview: 'linear-gradient(135deg, #132a13 0%, #4f772d 100%)' },
-    { id: 'ocean', label: 'Ocean', preview: 'linear-gradient(135deg, #001219 0%, #0a9396 100%)' },
-    { id: 'mountains', label: 'Mountains', preview: 'linear-gradient(135deg, #1a1c29 0%, #8d99ae 100%)' },
-    { id: 'sunset', label: 'Sunset', preview: 'linear-gradient(135deg, #3a0ca3 0%, #f77f00 100%)' },
-    { id: 'meadow', label: 'Meadow', preview: 'linear-gradient(135deg, #52b788 0%, #ffd166 100%)' },
-    { id: 'aurora', label: 'Aurora', preview: 'linear-gradient(135deg, #050515 0%, #328cc1 100%)' },
-    { id: 'blossoms', label: 'Blossoms', preview: 'linear-gradient(135deg, #ffb5a7 0%, #b5e2fa 100%)' },
-    { id: 'tropical', label: 'Tropical', preview: 'linear-gradient(135deg, #0077b6 0%, #ffd166 100%)' },
-    { id: 'ruby', label: 'Ruby', preview: 'linear-gradient(135deg, #2f0000 0%, #900c3f 100%)' },
-    { id: 'jungle', label: 'Jungle', preview: 'linear-gradient(135deg, #0b2512 0%, #2a7b3e 100%)' },
-    { id: 'autumn', label: 'Autumn', preview: 'linear-gradient(135deg, #582f0e 0%, #c18c5d 100%)' },
-    { id: 'custom', label: 'Custom', preview: 'linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%)' }
+    { id: 'forest', label: 'Forest', preview: 'url(/wallpapers/forest.jpg)' },
+    { id: 'ocean', label: 'Ocean', preview: 'url(/wallpapers/ocean.jpg)' },
+    { id: 'mountains', label: 'Mountains', preview: 'url(/wallpapers/mountains.jpg)' },
+    { id: 'sunset', label: 'Sunset', preview: 'url(/wallpapers/sunset.jpg)' },
+    { id: 'meadow', label: 'Meadow', preview: 'url(/wallpapers/meadow.jpg)' },
+    { id: 'aurora', label: 'Aurora', preview: 'url(/wallpapers/aurora.jpg)' },
+    { id: 'blossoms', label: 'Blossoms', preview: 'url(/wallpapers/blossoms.jpg)' },
+    { id: 'tropical', label: 'Tropical', preview: 'url(/wallpapers/tropical.jpg)' },
+    { id: 'ruby', label: 'Ruby', preview: 'url(/wallpapers/ruby.jpg)' },
+    { id: 'jungle', label: 'Jungle', preview: 'url(/wallpapers/jungle.jpg)' },
+    { id: 'autumn', label: 'Autumn', preview: 'url(/wallpapers/autumn.jpg)' },
+    { id: 'custom', label: 'Custom 🖼️', preview: customWallpaper ? `url(${customWallpaper})` : 'linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%)' }
   ];
+
+  const handleCustomWallpaperChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setCustomWallpaper(event.target.result);
+        setWallpaper('custom');
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleWallpaperClick = (wId) => {
+    if (wId === 'custom') {
+      document.getElementById('customWallpaperInput').click();
+    } else {
+      setWallpaper(wId);
+    }
+  };
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
       <Header title="Settings" onBack={onBack} />
       <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
+        
+        {/* Hidden input for custom wallpaper */}
+        <input 
+          type="file" 
+          accept="image/*" 
+          id="customWallpaperInput" 
+          style={{ display: 'none' }} 
+          onChange={handleCustomWallpaperChange} 
+        />
 
         <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '10px', color: 'var(--gray-dark)' }}>App Theme</h3>
         <div className="card" style={{ marginBottom: '20px', padding: '15px' }}>
@@ -813,21 +842,22 @@ export const SettingsScreen = ({ onBack, theme, setTheme, wallpaper = 'none', se
             {wallpapers.map(w => (
               <button
                 key={w.id}
-                onClick={() => setWallpaper(w.id)}
+                onClick={() => handleWallpaperClick(w.id)}
                 style={{
-                  padding: '12px 6px',
+                  height: '55px',
                   borderRadius: '10px',
                   border: wallpaper === w.id ? '2.5px solid var(--primary)' : '1px solid var(--gray-light)',
-                  background: w.preview,
-                  color: ['blossoms', 'none'].includes(w.id) ? '#333333' : '#FFFFFF',
-                  fontWeight: '700',
-                  fontSize: '11px',
+                  background: w.id === 'none' ? w.preview : `${w.preview} no-repeat center`,
+                  backgroundSize: 'cover',
+                  color: (w.id === 'none' || w.id === 'custom') ? 'var(--black)' : '#FFFFFF',
+                  fontWeight: '800',
+                  fontSize: '12px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  textShadow: ['blossoms', 'none'].includes(w.id) ? 'none' : '0 1px 2px rgba(0,0,0,0.5)',
-                  boxShadow: wallpaper === w.id ? '0 2px 8px rgba(0,0,0,0.15)' : 'none'
+                  textShadow: (w.id === 'none' || w.id === 'custom') ? 'none' : '0 1.5px 3px rgba(0,0,0,0.8)',
+                  boxShadow: wallpaper === w.id ? '0 3px 10px rgba(0,0,0,0.25)' : 'none'
                 }}
               >
                 {w.label}
