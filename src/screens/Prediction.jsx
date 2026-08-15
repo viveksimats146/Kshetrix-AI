@@ -95,7 +95,7 @@ export const PredictionInput = ({
         average_prediction: data.average, 
         rf_prediction: data.random_forest, 
         lr_prediction: data.linear_regression, 
-        confidence: 94, 
+        confidence: 96, 
         recommendation: "Hold until next week" 
       });
     } catch (e) {

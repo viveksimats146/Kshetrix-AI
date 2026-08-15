@@ -17,8 +17,8 @@ class AgricoML:
         self.le_district = LabelEncoder()
         self.le_market = LabelEncoder()
         self.le_commodity = LabelEncoder()
-        # Reduced complexity for faster demo training with large dataset
-        self.rf_model = RandomForestRegressor(n_estimators=10, max_depth=15, n_jobs=-1, random_state=42)
+        # Configured for high-capacity training to maximize model accuracy (target 96%+)
+        self.rf_model = RandomForestRegressor(n_estimators=100, max_depth=None, n_jobs=-1, random_state=42)
         self.lr_model = LinearRegression()
         self.tfidf = TfidfVectorizer(stop_words='english')
         

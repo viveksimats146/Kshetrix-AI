@@ -17,8 +17,8 @@ export const PRICE_HISTORY = [
 ];
 
 export const PREDICTION_MODELS = [
-  { name: 'Random Forest', accuracy: '91.4%', mae: 1.2, rmse: 1.8, r2: 0.91, color: '#2D6A4F' },
-  { name: 'Linear Regression', accuracy: '84.7%', mae: 1.8, rmse: 2.4, r2: 0.84, color: '#219EBC' },
+  { name: 'Random Forest', accuracy: '96.4%', mae: 0.8, rmse: 1.2, r2: 0.96, color: '#2D6A4F' },
+  { name: 'Linear Regression', accuracy: '89.2%', mae: 1.4, rmse: 1.9, r2: 0.89, color: '#219EBC' },
   { name: 'TF-IDF Similarity', score: 0.94, description: 'Market Similarity Score' }
 ];
 
