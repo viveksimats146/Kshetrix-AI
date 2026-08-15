@@ -23,18 +23,18 @@ import { supabase } from './services/supabaseClient';
 
 export const WALLPAPERS = {
   none: '',
-  forest: 'linear-gradient(135deg, #132a13 0%, #31572c 50%, #4f772d 100%)',
-  ocean: 'linear-gradient(135deg, #001219 0%, #005f73 50%, #0a9396 100%)',
-  mountains: 'linear-gradient(135deg, #1a1c29 0%, #2b2d42 50%, #8d99ae 100%)',
-  sunset: 'linear-gradient(135deg, #3a0ca3 0%, #f72585 50%, #f77f00 100%)',
-  meadow: 'linear-gradient(135deg, #52b788 0%, #74c69d 50%, #ffd166 100%)',
-  aurora: 'linear-gradient(135deg, #050515 0%, #0b3c5d 30%, #328cc1 60%, #1d2731 100%)',
-  blossoms: 'linear-gradient(135deg, #ffb5a7 0%, #ffcad4 50%, #b5e2fa 100%)',
-  tropical: 'linear-gradient(135deg, #0077b6 0%, #00b4d8 50%, #ffd166 100%)',
-  ruby: 'linear-gradient(135deg, #2f0000 0%, #6a040f 50%, #900c3f 100%)',
-  jungle: 'linear-gradient(135deg, #0b2512 0%, #13401e 50%, #2a7b3e 100%)',
-  autumn: 'linear-gradient(135deg, #582f0e 0%, #7f4f24 50%, #c18c5d 100%)',
-  custom: 'linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%)'
+  forest: '/wallpapers/forest.jpg',
+  ocean: '/wallpapers/ocean.jpg',
+  mountains: '/wallpapers/mountains.jpg',
+  sunset: '/wallpapers/sunset.jpg',
+  meadow: '/wallpapers/meadow.jpg',
+  aurora: '/wallpapers/aurora.jpg',
+  blossoms: '/wallpapers/blossoms.jpg',
+  tropical: '/wallpapers/tropical.jpg',
+  ruby: '/wallpapers/ruby.jpg',
+  jungle: '/wallpapers/jungle.jpg',
+  autumn: '/wallpapers/autumn.jpg',
+  custom: '/wallpapers/custom.jpg'
 };
 
 import { 
@@ -42,6 +42,40 @@ import {
   ChevronLeft, Layout, TrendingUp, Info, User,
   Home, BarChart2, Leaf, Bell, Sparkles
 } from 'lucide-react';
+
+const resizeImage = (file, callback) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX_WIDTH = 150;
+      const MAX_HEIGHT = 150;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width *= MAX_HEIGHT / height;
+          height = MAX_HEIGHT;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      callback(dataUrl);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('splash');
@@ -58,8 +92,14 @@ export default function App() {
   const [otpBackScreen, setOtpBackScreen] = useState('login');
   const [cameFromOnboarding, setCameFromOnboarding] = useState(false);
   const [loginPhoneOrEmail, setLoginPhoneOrEmail] = useState('');
+  const [profilePhoto, setProfilePhoto] = useState(localStorage.getItem('agrico_profile_photo') || '');
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
 
   const [wallpaper, setWallpaper] = useState(localStorage.getItem('agrico_wallpaper') || 'none');
+
+  useEffect(() => {
+    localStorage.setItem('agrico_profile_photo', profilePhoto);
+  }, [profilePhoto]);
 
   useEffect(() => {
     localStorage.setItem('agrico_theme', theme);
@@ -112,6 +152,7 @@ export default function App() {
           setProfileDistrict(data.district);
           if (data.email) setSignupEmail(data.email);
           if (data.phone) setSignupPhone(data.phone);
+          if (data.photo) setProfilePhoto(data.photo);
           return;
         }
       } catch (err) {
@@ -129,6 +170,7 @@ export default function App() {
           setProfileName(data.name);
           setProfileState(data.state);
           setProfileDistrict(data.district);
+          if (data.photo) setProfilePhoto(data.photo);
         }
       } catch (err) {
         console.warn("Failed fallback loading profile from Supabase:", err.message);
@@ -167,7 +209,8 @@ export default function App() {
         state: profileState,
         district: profileDistrict,
         email: signupEmail || (loginPhoneOrEmail.includes('@') ? loginPhoneOrEmail : ''),
-        phone: signupPhone || (loginPhoneOrEmail.includes('@') ? '' : loginPhoneOrEmail)
+        phone: signupPhone || (loginPhoneOrEmail.includes('@') ? '' : loginPhoneOrEmail),
+        photo: profilePhoto || null
       };
 
       const res = await fetch(`${apiBase}/save-profile`, {
@@ -211,6 +254,34 @@ export default function App() {
       }
     }
     navigate(targetScreen);
+  };
+
+  const handlePhotoUpload = async (photoBase64) => {
+    setProfilePhoto(photoBase64);
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const profileId = localStorage.getItem('agrico_profile_id');
+      const payload = {
+        id: profileId || null,
+        name: profileName,
+        state: profileState,
+        district: profileDistrict,
+        email: signupEmail,
+        phone: signupPhone,
+        photo: photoBase64
+      };
+      const res = await fetch(`${apiBase}/save-profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.status === 'success' && data.id) {
+        localStorage.setItem('agrico_profile_id', data.id);
+      }
+    } catch (e) {
+      console.warn("Failed saving profile photo to DB:", e.message);
+    }
   };
 
   const [screenHistory, setScreenHistory] = useState([localStorage.getItem('agrico_logged_in') === 'true' ? 'dashboard' : 'welcome']);
@@ -375,27 +446,155 @@ export default function App() {
       case 'activity': return <UserActivityLog onBack={goBack} />;
       case 'referral': return <ReferralProgram onBack={goBack} />;
       
-      case 'profile': return (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button onClick={goBack} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
-            <h2 style={{ fontSize: '18px' }}>My Profile</h2>
-          </div>
-          <div style={{ flex: 1, padding: '20px', textAlign: 'center' }}>
-            <div style={{ width: '80px', height: '80px', borderRadius: '40px', background: 'var(--primary-pale)', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>👤</div>
-            <h2 style={{ marginTop: '15px' }}>{profileName || 'Farmer Profile'}</h2>
-            <p style={{ color: 'var(--gray-medium)' }}>{profileDistrict && profileState ? `${profileDistrict}, ${profileState}` : 'Register details to complete setup'}</p>
-            <div style={{ marginTop: '30px', textAlign: 'left' }}>
-              <div className="card" onClick={() => navigate('edit-profile')}>{translate('accountDetails', language)}</div>
-              <div className="card" onClick={() => navigate('schemes')}>{translate('pmKisan', language)}</div>
-              <div className="card" onClick={() => navigate('settings')}>{translate('settings', language)}</div>
-              <div className="card" onClick={() => { localStorage.removeItem('agrico_logged_in'); setCameFromOnboarding(false); navigate('welcome'); }} style={{ color: 'var(--error)' }}>Logout</div>
+      case 'profile': {
+        const handleFileChange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            resizeImage(file, (resizedBase64) => {
+              handlePhotoUpload(resizedBase64);
+            });
+          }
+        };
+
+        return (
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            {/* Hidden file inputs for camera and gallery */}
+            <input 
+              type="file" 
+              accept="image/*" 
+              capture="user" 
+              id="cameraInput" 
+              style={{ display: 'none' }} 
+              onChange={handleFileChange} 
+            />
+            <input 
+              type="file" 
+              accept="image/*" 
+              id="galleryInput" 
+              style={{ display: 'none' }} 
+              onChange={handleFileChange} 
+            />
+
+            <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <button onClick={goBack} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <h2 style={{ fontSize: '18px' }}>My Profile</h2>
             </div>
+            <div style={{ flex: 1, padding: '20px', textAlign: 'center', position: 'relative' }}>
+              <div 
+                onClick={() => setShowPhotoModal(true)} 
+                style={{ 
+                  width: '90px', 
+                  height: '90px', 
+                  borderRadius: '45px', 
+                  background: 'var(--primary-pale)', 
+                  margin: '0 auto', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: '32px',
+                  cursor: 'pointer',
+                  overflow: 'hidden',
+                  position: 'relative',
+                  border: '3px solid var(--primary)',
+                  boxShadow: 'var(--shadow-md)'
+                }}
+                title="Change Profile Photo"
+              >
+                {profilePhoto ? (
+                  <img src={profilePhoto} alt="Farmer Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span>👤</span>
+                )}
+                {/* Upload overlay indicator */}
+                <div style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0, height: '24px',
+                  background: 'rgba(0,0,0,0.4)', color: 'white', fontSize: '9px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: '700'
+                }}>
+                  EDIT
+                </div>
+              </div>
+              
+              <h2 style={{ marginTop: '15px' }}>{profileName || 'Farmer Profile'}</h2>
+              <p style={{ color: 'var(--gray-medium)' }}>{profileDistrict && profileState ? `${profileDistrict}, ${profileState}` : 'Register details to complete setup'}</p>
+              <div style={{ marginTop: '30px', textAlign: 'left' }}>
+                <div className="card" onClick={() => navigate('edit-profile')}>{translate('accountDetails', language)}</div>
+                <div className="card" onClick={() => navigate('schemes')}>{translate('pmKisan', language)}</div>
+                <div className="card" onClick={() => navigate('settings')}>{translate('settings', language)}</div>
+                <div className="card" onClick={() => { localStorage.removeItem('agrico_logged_in'); setCameFromOnboarding(false); navigate('welcome'); }} style={{ color: 'var(--error)' }}>Logout</div>
+              </div>
+            </div>
+
+            {/* Upload Modal Bottom-Sheet */}
+            {showPhotoModal && (
+              <div style={{
+                position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex',
+                alignItems: 'flex-end', justifyContent: 'center'
+              }} onClick={() => setShowPhotoModal(false)}>
+                <div style={{
+                  width: '100%', maxWidth: '450px', background: 'var(--white)',
+                  borderTopLeftRadius: '24px', borderTopRightRadius: '24px',
+                  padding: '25px 20px', display: 'flex', flexDirection: 'column',
+                  gap: '15px', pointerEvents: 'auto',
+                  boxShadow: '0 -8px 24px rgba(0,0,0,0.15)'
+                }} onClick={(e) => e.stopPropagation()}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--black)', textAlign: 'center', marginBottom: '5px' }}>Upload Profile Photo</h3>
+                  
+                  <button onClick={() => {
+                    setShowPhotoModal(false);
+                    document.getElementById('cameraInput').click();
+                  }} style={{
+                    display: 'flex', alignItems: 'center', gap: '15px', padding: '15px',
+                    borderRadius: '12px', background: 'var(--gray-light)', border: 'none',
+                    fontSize: '15px', fontWeight: '600', color: 'var(--black)', cursor: 'pointer',
+                    textAlign: 'left'
+                  }}>
+                    📸 Take Photo using Camera
+                  </button>
+
+                  <button onClick={() => {
+                    setShowPhotoModal(false);
+                    document.getElementById('galleryInput').click();
+                  }} style={{
+                    display: 'flex', alignItems: 'center', gap: '15px', padding: '15px',
+                    borderRadius: '12px', background: 'var(--gray-light)', border: 'none',
+                    fontSize: '15px', fontWeight: '600', color: 'var(--black)', cursor: 'pointer',
+                    textAlign: 'left'
+                  }}>
+                    🖼️ Choose from Gallery
+                  </button>
+
+                  {profilePhoto && (
+                    <button onClick={() => {
+                      setShowPhotoModal(false);
+                      handlePhotoUpload('');
+                    }} style={{
+                      display: 'flex', alignItems: 'center', gap: '15px', padding: '15px',
+                      borderRadius: '12px', background: 'rgba(255, 75, 75, 0.1)', border: 'none',
+                      fontSize: '15px', fontWeight: '600', color: 'var(--error)', cursor: 'pointer',
+                      textAlign: 'left'
+                    }}>
+                      🗑️ Remove Photo
+                    </button>
+                  )}
+
+                  <button onClick={() => setShowPhotoModal(false)} style={{
+                    padding: '15px', borderRadius: '12px', background: 'none', border: '1px solid var(--gray-light)',
+                    fontSize: '15px', fontWeight: '600', color: 'var(--gray-medium)', cursor: 'pointer',
+                    marginTop: '10px'
+                  }}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      );
+        );
+      }
 
       default: return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -464,7 +663,10 @@ export default function App() {
 
   return (
     <div className="mobile-container" data-theme={theme} style={{
-      background: wallpaper !== 'none' ? WALLPAPERS[wallpaper] : 'var(--off-white)',
+      backgroundImage: wallpaper !== 'none' ? `url(${WALLPAPERS[wallpaper]})` : 'none',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundColor: wallpaper === 'none' ? 'var(--off-white)' : 'transparent',
       color: 'var(--black)',
       transition: 'background 0.5s ease',
       position: 'relative'
