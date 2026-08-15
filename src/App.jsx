@@ -21,6 +21,22 @@ import { CropDeepDive, MandiDetails, MarketComparison, PriceAlertSetup, UserActi
 import { translate } from './utils/translations';
 import { supabase } from './services/supabaseClient';
 
+export const WALLPAPERS = {
+  none: '',
+  forest: 'linear-gradient(135deg, #132a13 0%, #31572c 50%, #4f772d 100%)',
+  ocean: 'linear-gradient(135deg, #001219 0%, #005f73 50%, #0a9396 100%)',
+  mountains: 'linear-gradient(135deg, #1a1c29 0%, #2b2d42 50%, #8d99ae 100%)',
+  sunset: 'linear-gradient(135deg, #3a0ca3 0%, #f72585 50%, #f77f00 100%)',
+  meadow: 'linear-gradient(135deg, #52b788 0%, #74c69d 50%, #ffd166 100%)',
+  aurora: 'linear-gradient(135deg, #050515 0%, #0b3c5d 30%, #328cc1 60%, #1d2731 100%)',
+  blossoms: 'linear-gradient(135deg, #ffb5a7 0%, #ffcad4 50%, #b5e2fa 100%)',
+  tropical: 'linear-gradient(135deg, #0077b6 0%, #00b4d8 50%, #ffd166 100%)',
+  ruby: 'linear-gradient(135deg, #2f0000 0%, #6a040f 50%, #900c3f 100%)',
+  jungle: 'linear-gradient(135deg, #0b2512 0%, #13401e 50%, #2a7b3e 100%)',
+  autumn: 'linear-gradient(135deg, #582f0e 0%, #7f4f24 50%, #c18c5d 100%)',
+  custom: 'linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%)'
+};
+
 import { 
   Mail, Lock, Phone, ShieldCheck, ArrowRight, 
   ChevronLeft, Layout, TrendingUp, Info, User,
@@ -31,17 +47,19 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState('splash');
   const [predictionResult, setPredictionResult] = useState(null);
   const [formData, setFormData] = useState({ state: 'Maharashtra', district: 'Nashik', commodity: 'Onion', date: new Date().toISOString().split('T')[0] });
-  const [theme, setTheme] = useState(localStorage.getItem('agrico_theme') || 'green');
+  const [theme, setTheme] = useState(localStorage.getItem('agrico_theme') || 'classic');
   const [language, setLanguage] = useState(localStorage.getItem('agrico_lang') || 'English');
-  const [profileName, setProfileName] = useState(localStorage.getItem('agrico_profile_name') || 'Ramesh Kumar');
-  const [profileState, setProfileState] = useState(localStorage.getItem('agrico_profile_state') || 'Maharashtra');
-  const [profileDistrict, setProfileDistrict] = useState(localStorage.getItem('agrico_profile_district') || 'Nashik');
+  const [profileName, setProfileName] = useState(localStorage.getItem('agrico_profile_name') || '');
+  const [profileState, setProfileState] = useState(localStorage.getItem('agrico_profile_state') || '');
+  const [profileDistrict, setProfileDistrict] = useState(localStorage.getItem('agrico_profile_district') || '');
   const [signupPhone, setSignupPhone] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [otpTargetScreen, setOtpTargetScreen] = useState('dashboard');
   const [otpBackScreen, setOtpBackScreen] = useState('login');
   const [cameFromOnboarding, setCameFromOnboarding] = useState(false);
   const [loginPhoneOrEmail, setLoginPhoneOrEmail] = useState('');
+
+  const [wallpaper, setWallpaper] = useState(localStorage.getItem('agrico_wallpaper') || 'none');
 
   useEffect(() => {
     localStorage.setItem('agrico_theme', theme);
@@ -51,6 +69,32 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('agrico_lang', language);
   }, [language]);
+
+  useEffect(() => {
+    localStorage.setItem('agrico_wallpaper', wallpaper);
+  }, [wallpaper]);
+
+  useEffect(() => {
+    if (wallpaper && wallpaper !== 'none') {
+      const isDarkBackground = ['forest', 'ocean', 'mountains', 'sunset', 'aurora', 'ruby', 'jungle', 'autumn', 'custom'].includes(wallpaper);
+      document.documentElement.style.setProperty('--white', isDarkBackground ? 'rgba(30, 30, 30, 0.8)' : 'rgba(255, 255, 255, 0.85)');
+      document.documentElement.style.setProperty('--off-white', 'transparent');
+      document.documentElement.style.setProperty('--gray-light', isDarkBackground ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)');
+      if (isDarkBackground) {
+        document.documentElement.style.setProperty('--black', '#F8F9FA');
+        document.documentElement.style.setProperty('--gray-dark', '#E9ECEF');
+      } else {
+        document.documentElement.style.setProperty('--black', '#1B4332');
+        document.documentElement.style.setProperty('--gray-dark', '#495057');
+      }
+    } else {
+      document.documentElement.style.removeProperty('--white');
+      document.documentElement.style.removeProperty('--off-white');
+      document.documentElement.style.removeProperty('--gray-light');
+      document.documentElement.style.removeProperty('--black');
+      document.documentElement.style.removeProperty('--gray-dark');
+    }
+  }, [wallpaper, theme]);
 
   // Load profile from database on mount
   useEffect(() => {
@@ -169,7 +213,29 @@ export default function App() {
     navigate(targetScreen);
   };
 
-  const navigate = (screen) => setCurrentScreen(screen);
+  const [screenHistory, setScreenHistory] = useState([localStorage.getItem('agrico_logged_in') === 'true' ? 'dashboard' : 'welcome']);
+
+  const navigate = (screen) => {
+    const tabScreens = ['dashboard', 'analytics', 'crops', 'alerts', 'profile'];
+    if (tabScreens.includes(screen)) {
+      setScreenHistory([screen]);
+    } else {
+      setScreenHistory(prev => [...prev, screen]);
+    }
+    setCurrentScreen(screen);
+  };
+
+  const goBack = () => {
+    if (screenHistory.length > 1) {
+      const newHistory = [...screenHistory];
+      newHistory.pop(); // Remove current screen
+      const prevScreen = newHistory[newHistory.length - 1];
+      setScreenHistory(newHistory);
+      setCurrentScreen(prevScreen);
+    } else {
+      setCurrentScreen('dashboard');
+    }
+  };
 
   const handlePredict = (data) => {
     setPredictionResult(data);
@@ -244,83 +310,83 @@ export default function App() {
       
       // Profile Setup
       case 'profile-setup': return <ProfileSetup onNext={() => handleSaveProfile('crop-prefs')} onBack={() => navigate(otpBackScreen === 'login' ? 'welcome' : 'intro3')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
-      case 'edit-profile': return <ProfileSetup onNext={() => handleSaveProfile('settings')} onBack={() => navigate('settings')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
+      case 'edit-profile': return <ProfileSetup onNext={() => handleSaveProfile('profile')} onBack={goBack} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
       case 'crop-prefs': return <CropPreferences onNext={() => navigate('dashboard')} onBack={() => navigate('profile-setup')} />;
       
       // Dashboard & Intelligence
       case 'dashboard': return <MainDashboard onNav={(id) => navigate(id)} onBack={cameFromOnboarding ? () => navigate('crop-prefs') : null} profileName={profileName} currentLang={language} selectedCrop={formData.commodity} />;
-      case 'analytics': return <AnalyticsDashboard onBack={() => navigate('dashboard')} selectedCrop={formData.commodity} />;
-      case 'market-monitor': return <MarketMonitoring onBack={() => navigate('dashboard')} />;
-      case 'profit-loss': return <ProfitLossAnalysis onBack={() => predictionResult ? navigate('prediction-result') : navigate('dashboard')} predictionResult={predictionResult} selectedCrop={formData.commodity} />;
+      case 'analytics': return <AnalyticsDashboard onBack={goBack} selectedCrop={formData.commodity} />;
+      case 'market-monitor': return <MarketMonitoring onBack={goBack} />;
+      case 'profit-loss': return <ProfitLossAnalysis onBack={goBack} predictionResult={predictionResult} selectedCrop={formData.commodity} />;
       
       // Prediction Flow
       case 'crops':
-      case 'prediction-input': return <PredictionInput onPredict={handlePredict} onBack={() => navigate('dashboard')} currentLang={language} formData={formData} setFormData={setFormData} />;
+      case 'prediction-input': return <PredictionInput onPredict={handlePredict} onBack={goBack} currentLang={language} formData={formData} setFormData={setFormData} />;
       case 'prediction-loading': return <PredictionLoading formData={predictionResult} currentLang={language} onComplete={(res) => {
         setPredictionResult(prev => ({ ...prev, result: res }));
         navigate('prediction-result');
       }} />;
-      case 'prediction-result': return <PredictionResult result={predictionResult} onBack={() => navigate('prediction-input')} onDetails={() => navigate('profit-loss')} currentLang={language} />;
+      case 'prediction-result': return <PredictionResult result={predictionResult} onBack={goBack} onDetails={() => navigate('profit-loss')} currentLang={language} />;
       
       // Utilities
-      case 'schemes': return <GovtSchemes onBack={() => navigate('dashboard')} />;
-      case 'settings': return <SettingsScreen onBack={() => navigate('profile')} theme={theme} setTheme={setTheme} onNavigate={navigate} language={language} />;
-      case 'chatbot': return <AIChatbot onBack={() => navigate('dashboard')} currentLang={language} />;
-      case 'alerts': return <WeatherDashboard onBack={() => navigate('dashboard')} state={formData.state} district={formData.district} commodity={formData.commodity} date={formData.date} />;
+      case 'schemes': return <GovtSchemes onBack={goBack} />;
+      case 'settings': return <SettingsScreen onBack={goBack} theme={theme} setTheme={setTheme} wallpaper={wallpaper} setWallpaper={setWallpaper} onNavigate={navigate} language={language} />;
+      case 'chatbot': return <AIChatbot onBack={goBack} currentLang={language} />;
+      case 'alerts': return <WeatherDashboard onBack={goBack} state={formData.state} district={formData.district} commodity={formData.commodity} date={formData.date} />;
       
       // Community
-      case 'forum': return <FarmerForum onBack={() => navigate('dashboard')} />;
-      case 'expert-qa': return <ExpertQA onBack={() => navigate('dashboard')} />;
-      case 'stories': return <SuccessStories onBack={() => navigate('dashboard')} />;
-      case 'news': return <MarketNewsFeed onBack={() => navigate('dashboard')} />;
+      case 'forum': return <FarmerForum onBack={goBack} />;
+      case 'expert-qa': return <ExpertQA onBack={goBack} />;
+      case 'stories': return <SuccessStories onBack={goBack} />;
+      case 'news': return <MarketNewsFeed onBack={goBack} />;
       
       // Logistics
-      case 'transport': return <TransportFinder onBack={() => navigate('dashboard')} />;
-      case 'storage': return <ColdStorageFinder onBack={() => navigate('dashboard')} />;
-      case 'inventory': return <InventoryManager onBack={() => navigate('dashboard')} />;
-      case 'tracking': return <OrderTracking onBack={() => navigate('dashboard')} />;
+      case 'transport': return <TransportFinder onBack={goBack} />;
+      case 'storage': return <ColdStorageFinder onBack={goBack} />;
+      case 'inventory': return <InventoryManager onBack={goBack} />;
+      case 'tracking': return <OrderTracking onBack={goBack} />;
       
       // Finance
-      case 'loans': return <LoanApplication onBack={() => navigate('dashboard')} />;
-      case 'expenses': return <ExpenseTracker onBack={() => navigate('dashboard')} />;
-      case 'revenue': return <RevenueDashboard onBack={() => navigate('dashboard')} />;
-      case 'insurance': return <InsuranceStatus onBack={() => navigate('dashboard')} />;
+      case 'loans': return <LoanApplication onBack={goBack} />;
+      case 'expenses': return <ExpenseTracker onBack={goBack} />;
+      case 'revenue': return <RevenueDashboard onBack={goBack} />;
+      case 'insurance': return <InsuranceStatus onBack={goBack} />;
       
       // Education
-      case 'videos': return <VideoTutorials onBack={() => navigate('dashboard')} />;
-      case 'articles': return <ArticleReader onBack={() => navigate('dashboard')} />;
-      case 'calendar': return <CropCalendar onBack={() => navigate('dashboard')} />;
-      case 'pests': return <PestIdentification onBack={() => navigate('dashboard')} />;
+      case 'videos': return <VideoTutorials onBack={goBack} />;
+      case 'articles': return <ArticleReader onBack={goBack} />;
+      case 'calendar': return <CropCalendar onBack={goBack} />;
+      case 'pests': return <PestIdentification onBack={goBack} />;
       
       // Support
-      case 'faq': return <FAQScreen onBack={() => navigate('settings')} />;
-      case 'support': return <ContactSupport onBack={() => navigate('settings')} />;
-      case 'about': return <AboutKshetrixAI onBack={() => navigate('settings')} />;
-      case 'language': return <LanguageSelection onBack={() => navigate('settings')} currentLang={language} onChangeLang={setLanguage} />;
-      case 'privacy': return <PrivacyPolicy onBack={() => navigate('settings')} />;
-      case 'terms': return <TermsOfService onBack={() => navigate('settings')} />;
+      case 'faq': return <FAQScreen onBack={goBack} />;
+      case 'support': return <ContactSupport onBack={goBack} />;
+      case 'about': return <AboutKshetrixAI onBack={goBack} />;
+      case 'language': return <LanguageSelection onBack={goBack} currentLang={language} onChangeLang={setLanguage} />;
+      case 'privacy': return <PrivacyPolicy onBack={goBack} />;
+      case 'terms': return <TermsOfService onBack={goBack} />;
       
       // Extended Features
-      case 'crop-detail': return <CropDeepDive onBack={() => navigate('dashboard')} commodity={formData.commodity} state={formData.state} district={formData.district} />;
-      case 'mandi-detail': return <MandiDetails onBack={() => navigate('market-monitor')} defaultState={profileState} defaultDistrict={profileDistrict} />;
-      case 'compare': return <MarketComparison onBack={() => navigate('analytics')} />;
-      case 'alert-setup': return <PriceAlertSetup onBack={() => navigate('alerts')} defaultState={formData.state} defaultDistrict={formData.district} />;
-      case 'notification-settings': return <PriceAlertSetup onBack={() => navigate('settings')} defaultState={formData.state} defaultDistrict={formData.district} />;
-      case 'activity': return <UserActivityLog onBack={() => navigate('profile')} />;
-      case 'referral': return <ReferralProgram onBack={() => navigate('profile')} />;
+      case 'crop-detail': return <CropDeepDive onBack={goBack} commodity={formData.commodity} state={formData.state} district={formData.district} />;
+      case 'mandi-detail': return <MandiDetails onBack={goBack} defaultState={profileState || 'Maharashtra'} defaultDistrict={profileDistrict || 'Nashik'} />;
+      case 'compare': return <MarketComparison onBack={goBack} />;
+      case 'alert-setup': return <PriceAlertSetup onBack={goBack} defaultState={formData.state || 'Maharashtra'} defaultDistrict={formData.district || 'Nashik'} />;
+      case 'notification-settings': return <PriceAlertSetup onBack={goBack} defaultState={formData.state || 'Maharashtra'} defaultDistrict={formData.district || 'Nashik'} />;
+      case 'activity': return <UserActivityLog onBack={goBack} />;
+      case 'referral': return <ReferralProgram onBack={goBack} />;
       
       case 'profile': return (
         <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button onClick={() => navigate('dashboard')} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
+            <button onClick={goBack} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)' }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
             </button>
             <h2 style={{ fontSize: '18px' }}>My Profile</h2>
           </div>
           <div style={{ flex: 1, padding: '20px', textAlign: 'center' }}>
             <div style={{ width: '80px', height: '80px', borderRadius: '40px', background: 'var(--primary-pale)', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>👤</div>
-            <h2 style={{ marginTop: '15px' }}>{profileName}</h2>
-            <p style={{ color: 'var(--gray-medium)' }}>{profileDistrict}, {profileState}</p>
+            <h2 style={{ marginTop: '15px' }}>{profileName || 'Farmer Profile'}</h2>
+            <p style={{ color: 'var(--gray-medium)' }}>{profileDistrict && profileState ? `${profileDistrict}, ${profileState}` : 'Register details to complete setup'}</p>
             <div style={{ marginTop: '30px', textAlign: 'left' }}>
               <div className="card" onClick={() => navigate('edit-profile')}>{translate('accountDetails', language)}</div>
               <div className="card" onClick={() => navigate('schemes')}>{translate('pmKisan', language)}</div>
@@ -343,7 +409,7 @@ export default function App() {
             <div style={{ fontSize: '60px' }}>🚧</div>
             <h2 style={{ marginTop: '20px' }}>Screen: {currentScreen}</h2>
             <p style={{ color: 'var(--gray-medium)', margin: '10px 0 30px' }}>Module Optimization in Progress.</p>
-            <button onClick={() => setCurrentScreen('dashboard')} className="btn-primary">Return to Dashboard</button>
+            <button onClick={() => navigate('dashboard')} className="btn-primary">Return to Dashboard</button>
           </div>
         </div>
       );
@@ -397,7 +463,12 @@ export default function App() {
   const showGlobalAiButton = !nonLoggedScreens.includes(currentScreen);
 
   return (
-    <div className="mobile-container" data-theme={theme}>
+    <div className="mobile-container" data-theme={theme} style={{
+      background: wallpaper !== 'none' ? WALLPAPERS[wallpaper] : 'var(--off-white)',
+      color: 'var(--black)',
+      transition: 'background 0.5s ease',
+      position: 'relative'
+    }}>
       <AnimatePresence mode="wait">
         <motion.div 
           key={currentScreen}

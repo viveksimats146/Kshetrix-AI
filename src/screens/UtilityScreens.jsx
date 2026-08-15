@@ -740,37 +740,97 @@ export const AIChatbot = ({ onBack, currentLang = 'English' }) => {
   );
 };
 
-export const SettingsScreen = ({ onBack, theme, setTheme, onNavigate, language }) => {
+export const SettingsScreen = ({ onBack, theme, setTheme, wallpaper = 'none', setWallpaper, onNavigate, language }) => {
+  const themes = [
+    { id: 'classic', label: 'Classic', bg: '#2D6A4F', text: 'white' },
+    { id: 'dark', label: 'Dark', bg: '#1E1E1E', text: '#52B788' },
+    { id: 'gold', label: 'Gold', bg: '#D4A373', text: '#583101' },
+    { id: 'frosted', label: 'Frosted', bg: '#00B4D8', text: '#03045E' },
+    { id: 'grey', label: 'Grey', bg: '#4F5D75', text: 'white' },
+    { id: 'aqua', label: 'Aqua', bg: '#00C49F', text: '#004D40' },
+    { id: 'blue', label: 'Blue', bg: '#0A84FF', text: 'white' },
+    { id: 'barbie', label: 'Barbie', bg: '#F72585', text: 'white' },
+    { id: 'metal', label: 'Metal', bg: '#6C757D', text: '#F8F9FA' },
+    { id: 'batman', label: 'Batman', bg: '#111111', text: '#FEE440' },
+    { id: 'olive', label: 'Olive', bg: '#6B705C', text: '#3F4238' },
+    { id: 'sunset', label: 'Sunset', bg: '#E76F51', text: '#264653' },
+    { id: 'blood', label: 'Blood', bg: '#BA1A1A', text: '#FFDAD6' },
+    { id: 'midnight', label: 'Midnight', bg: '#7B2CBF', text: 'white' }
+  ];
+
+  const wallpapers = [
+    { id: 'none', label: 'None', preview: '#CCCCCC' },
+    { id: 'forest', label: 'Forest', preview: 'linear-gradient(135deg, #132a13 0%, #4f772d 100%)' },
+    { id: 'ocean', label: 'Ocean', preview: 'linear-gradient(135deg, #001219 0%, #0a9396 100%)' },
+    { id: 'mountains', label: 'Mountains', preview: 'linear-gradient(135deg, #1a1c29 0%, #8d99ae 100%)' },
+    { id: 'sunset', label: 'Sunset', preview: 'linear-gradient(135deg, #3a0ca3 0%, #f77f00 100%)' },
+    { id: 'meadow', label: 'Meadow', preview: 'linear-gradient(135deg, #52b788 0%, #ffd166 100%)' },
+    { id: 'aurora', label: 'Aurora', preview: 'linear-gradient(135deg, #050515 0%, #328cc1 100%)' },
+    { id: 'blossoms', label: 'Blossoms', preview: 'linear-gradient(135deg, #ffb5a7 0%, #b5e2fa 100%)' },
+    { id: 'tropical', label: 'Tropical', preview: 'linear-gradient(135deg, #0077b6 0%, #ffd166 100%)' },
+    { id: 'ruby', label: 'Ruby', preview: 'linear-gradient(135deg, #2f0000 0%, #900c3f 100%)' },
+    { id: 'jungle', label: 'Jungle', preview: 'linear-gradient(135deg, #0b2512 0%, #2a7b3e 100%)' },
+    { id: 'autumn', label: 'Autumn', preview: 'linear-gradient(135deg, #582f0e 0%, #c18c5d 100%)' },
+    { id: 'custom', label: 'Custom', preview: 'linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%)' }
+  ];
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
       <Header title="Settings" onBack={onBack} />
       <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
 
-        <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '10px', color: 'var(--gray-dark)' }}>App Customization</h3>
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '10px', color: 'var(--gray-dark)' }}>App Theme</label>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            {[
-              { id: 'green', label: 'Forest Green', bg: '#2D6A4F', text: 'white' },
-              { id: 'dark', label: 'Dark Mode', bg: '#1E1E1E', text: '#52B788' },
-              { id: 'gold', label: 'Harvest Gold', bg: '#D4A373', text: '#583101' }
-            ].map(t => (
+        <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '10px', color: 'var(--gray-dark)' }}>App Theme</h3>
+        <div className="card" style={{ marginBottom: '20px', padding: '15px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+            {themes.map(t => (
               <button
                 key={t.id}
                 onClick={() => setTheme(t.id)}
                 style={{
-                  flex: 1,
-                  padding: '10px',
-                  borderRadius: '8px',
-                  border: theme === t.id ? '2px solid var(--primary)' : '1px solid var(--gray-light)',
+                  padding: '12px 6px',
+                  borderRadius: '10px',
+                  border: theme === t.id ? '2.5px solid var(--primary)' : '1px solid var(--gray-light)',
                   background: t.bg,
                   color: t.text,
                   fontWeight: '700',
-                  fontSize: '12px',
-                  cursor: 'pointer'
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: theme === t.id ? '0 2px 8px rgba(0,0,0,0.15)' : 'none'
                 }}
               >
                 {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '10px', color: 'var(--gray-dark)' }}>Background Wallpaper</h3>
+        <div className="card" style={{ marginBottom: '20px', padding: '15px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+            {wallpapers.map(w => (
+              <button
+                key={w.id}
+                onClick={() => setWallpaper(w.id)}
+                style={{
+                  padding: '12px 6px',
+                  borderRadius: '10px',
+                  border: wallpaper === w.id ? '2.5px solid var(--primary)' : '1px solid var(--gray-light)',
+                  background: w.preview,
+                  color: ['blossoms', 'none'].includes(w.id) ? '#333333' : '#FFFFFF',
+                  fontWeight: '700',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textShadow: ['blossoms', 'none'].includes(w.id) ? 'none' : '0 1px 2px rgba(0,0,0,0.5)',
+                  boxShadow: wallpaper === w.id ? '0 2px 8px rgba(0,0,0,0.15)' : 'none'
+                }}
+              >
+                {w.label}
               </button>
             ))}
           </div>

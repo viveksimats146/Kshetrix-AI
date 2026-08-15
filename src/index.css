@@ -36,6 +36,21 @@
   --radius-xl: 32px;
 }
 
+/* Classic Theme (Default) */
+:root[data-theme="classic"] {
+  --primary: #2D6A4F;
+  --primary-dark: #1B4332;
+  --primary-light: #40916C;
+  --primary-lighter: #52B788;
+  --primary-pale: #D8F3DC;
+  --white: #FFFFFF;
+  --off-white: #F8F9FA;
+  --gray-light: #E9ECEF;
+  --gray-medium: #ADB5BD;
+  --gray-dark: #495057;
+  --black: #1B4332;
+}
+
 /* Dark Mode Theme */
 :root[data-theme="dark"] {
   --primary: #52B788;
@@ -64,6 +79,171 @@
   --gray-medium: #ADB5BD;
   --gray-dark: #495057;
   --black: #583101;
+}
+
+/* Frosted Theme */
+:root[data-theme="frosted"] {
+  --primary: #00B4D8;
+  --primary-dark: #0077B6;
+  --primary-light: #90E0EF;
+  --primary-lighter: #CAF0F8;
+  --primary-pale: rgba(202, 240, 248, 0.4);
+  --white: rgba(255, 255, 255, 0.75);
+  --off-white: rgba(240, 248, 255, 0.6);
+  --gray-light: rgba(233, 236, 239, 0.5);
+  --gray-medium: #8D99AE;
+  --gray-dark: #2B2D42;
+  --black: #03045E;
+}
+
+/* Grey (Slate) Theme */
+:root[data-theme="grey"] {
+  --primary: #4F5D75;
+  --primary-dark: #2D3142;
+  --primary-light: #8D99AE;
+  --primary-lighter: #BFC0C0;
+  --primary-pale: #EAEAEA;
+  --white: #FFFFFF;
+  --off-white: #EFEDEF;
+  --gray-light: #E0E0E0;
+  --gray-medium: #9E9E9E;
+  --gray-dark: #424242;
+  --black: #2D3142;
+}
+
+/* Aqua Theme */
+:root[data-theme="aqua"] {
+  --primary: #00C49F;
+  --primary-dark: #007A64;
+  --primary-light: #00F5D4;
+  --primary-lighter: #A9F0D1;
+  --primary-pale: #E6FBF7;
+  --white: #FFFFFF;
+  --off-white: #F4FDFB;
+  --gray-light: #E0F2F1;
+  --gray-medium: #80CBC4;
+  --gray-dark: #004D40;
+  --black: #004D40;
+}
+
+/* Blue Theme */
+:root[data-theme="blue"] {
+  --primary: #0A84FF;
+  --primary-dark: #0040DD;
+  --primary-light: #5AC8FA;
+  --primary-lighter: #D1E9FF;
+  --primary-pale: #F0F7FF;
+  --white: #FFFFFF;
+  --off-white: #F5F9FD;
+  --gray-light: #E1EAF5;
+  --gray-medium: #A0C0E0;
+  --gray-dark: #1E3A8A;
+  --black: #1E3A8A;
+}
+
+/* Barbie Theme */
+:root[data-theme="barbie"] {
+  --primary: #F72585;
+  --primary-dark: #7209B7;
+  --primary-light: #FF70A6;
+  --primary-lighter: #FFB5D8;
+  --primary-pale: #FFF0F5;
+  --white: #FFFFFF;
+  --off-white: #FFF5F8;
+  --gray-light: #FFE3EC;
+  --gray-medium: #F7A8C4;
+  --gray-dark: #8A0F4A;
+  --black: #8A0F4A;
+}
+
+/* Metal (Steel) Theme */
+:root[data-theme="metal"] {
+  --primary: #6C757D;
+  --primary-dark: #2F3E46;
+  --primary-light: #ADB5BD;
+  --primary-lighter: #DEE2E6;
+  --primary-pale: #354F52;
+  --white: #343A40;
+  --off-white: #212529;
+  --gray-light: #495057;
+  --gray-medium: #888888;
+  --gray-dark: #DEE2E6;
+  --black: #F8F9FA;
+}
+
+/* Batman Theme */
+:root[data-theme="batman"] {
+  --primary: #FEE440;
+  --primary-dark: #000000;
+  --primary-light: #FFEA79;
+  --primary-lighter: #FFF4B8;
+  --primary-pale: #1A1A1A;
+  --white: #111111;
+  --off-white: #050505;
+  --gray-light: #222222;
+  --gray-medium: #555555;
+  --gray-dark: #DDDDDD;
+  --black: #FEE440;
+}
+
+/* Olive Theme */
+:root[data-theme="olive"] {
+  --primary: #6B705C;
+  --primary-dark: #3F4238;
+  --primary-light: #A5A58D;
+  --primary-lighter: #D8F3DC;
+  --primary-pale: #FFE8D6;
+  --white: #FFFFFF;
+  --off-white: #F4F1DE;
+  --gray-light: #E0DCD3;
+  --gray-medium: #B8B0A5;
+  --gray-dark: #3D405B;
+  --black: #3F4238;
+}
+
+/* Sunset Theme */
+:root[data-theme="sunset"] {
+  --primary: #E76F51;
+  --primary-dark: #264653;
+  --primary-light: #F4A261;
+  --primary-lighter: #E9C46A;
+  --primary-pale: #FFF3CD;
+  --white: #FFFFFF;
+  --off-white: #FAF0CA;
+  --gray-light: #F4E8C1;
+  --gray-medium: #E9C46A;
+  --gray-dark: #264653;
+  --black: #264653;
+}
+
+/* Blood (Crimson) Theme */
+:root[data-theme="blood"] {
+  --primary: #BA1A1A;
+  --primary-dark: #690005;
+  --primary-light: #FF897D;
+  --primary-lighter: #FFDAD6;
+  --primary-pale: #2C0001;
+  --white: #201A19;
+  --off-white: #130E0E;
+  --gray-light: #362F2E;
+  --gray-medium: #857371;
+  --gray-dark: #F5DDDA;
+  --black: #FFDAD6;
+}
+
+/* Midnight Theme */
+:root[data-theme="midnight"] {
+  --primary: #7B2CBF;
+  --primary-dark: #240046;
+  --primary-light: #9D4EDD;
+  --primary-lighter: #E0AAFF;
+  --primary-pale: #10002B;
+  --white: #0D001D;
+  --off-white: #030008;
+  --gray-light: #240046;
+  --gray-medium: #5A189A;
+  --gray-dark: #E0AAFF;
+  --black: #FFFFFF;
 }
 
 * {

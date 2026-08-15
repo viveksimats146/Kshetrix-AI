@@ -108,12 +108,7 @@ export const PredictionInput = ({
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
       <Header title={translate('predictPrice', currentLang)} onBack={onBack} />
       <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
-        <div style={{ background: 'var(--primary-pale)', padding: '15px', borderRadius: '12px', display: 'flex', gap: '15px', marginBottom: '30px' }}>
-          <Brain color="var(--primary)" size={24} style={{ flexShrink: 0 }} />
-          <p style={{ fontSize: '13px', color: 'var(--primary-dark)', lineHeight: '1.5' }}>
-            {currentLang === 'हिंदी' ? 'हमारा AI इंजन फसल की कीमतों का पूर्वानुमान लगाने के लिए ऐतिहासिक मंडी डेटा का उपयोग करता है।' : currentLang === 'తెలుగు' ? 'పంట ధరలను అంచనా వేయడానికి మా AI ఇంజిన్ చారిత్రక మండి డేటాను ఉపయోగిస్తుంది.' : currentLang === 'मराठी' ? 'आमचे AI इंजिन पिकांच्या किमतीचा अंदाज घेण्यासाठी ऐतिहासिक बाजार माहिती वापरते.' : 'Our AI engine uses historical mandi data to forecast crop prices. Data is sourced live from data.gov.in.'}
-          </p>
-        </div>
+
 
         {fetching ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>
