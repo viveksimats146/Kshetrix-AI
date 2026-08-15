@@ -5,6 +5,7 @@ import { getStates, getDistricts, getMarkets, getCommodities, getDistrictMarketD
 import { fetchWeatherForDistrict } from '../services/weatherApi';
 import { getCropEmoji } from '../utils/cropHelper';
 import { translate } from '../utils/translations';
+import { getApiBaseUrl } from '../utils/api';
 
 const Header = ({ title, onBack }) => (
   <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'var(--white)' }}>
@@ -72,7 +73,7 @@ export const PredictionInput = ({
     setLoading(true);
     setApiError('');
     try {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const apiBase = getApiBaseUrl();
       const res = await fetch(`${apiBase}/predict`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

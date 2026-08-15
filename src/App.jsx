@@ -20,6 +20,7 @@ import { FAQScreen, ContactSupport, AboutKshetrixAI, LanguageSelection, PrivacyP
 import { CropDeepDive, MandiDetails, MarketComparison, PriceAlertSetup, UserActivityLog, ReferralProgram } from './screens/ExtendedFeatures';
 import { translate } from './utils/translations';
 import { supabase } from './services/supabaseClient';
+import { getApiBaseUrl } from './utils/api';
 
 export const WALLPAPERS = {
   none: '',
@@ -147,7 +148,7 @@ export default function App() {
       const profileId = localStorage.getItem('agrico_profile_id');
       if (!profileId) return;
       try {
-        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+        const apiBase = getApiBaseUrl();
         const res = await fetch(`${apiBase}/get-profile?id=${profileId}`);
         if (!res.ok) throw new Error("Backend profile fetch failed");
         const data = await res.json();
@@ -206,7 +207,7 @@ export default function App() {
 
   const handleSaveProfile = async (targetScreen) => {
     try {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const apiBase = getApiBaseUrl();
       const profileId = localStorage.getItem('agrico_profile_id');
       const payload = {
         id: profileId || null,
@@ -264,7 +265,7 @@ export default function App() {
   const handlePhotoUpload = async (photoBase64) => {
     setProfilePhoto(photoBase64);
     try {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const apiBase = getApiBaseUrl();
       const profileId = localStorage.getItem('agrico_profile_id');
       const payload = {
         id: profileId || null,

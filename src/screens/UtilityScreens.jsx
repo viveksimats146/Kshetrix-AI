@@ -4,6 +4,7 @@ import { getApiKey, setApiKey } from '../services/mandiApi';
 import { supabase } from '../services/supabaseClient';
 import { fetchWeatherForDistrict } from '../services/weatherApi';
 import { translate } from '../utils/translations';
+import { getApiBaseUrl } from '../utils/api';
 import { getSpeechLanguageCode } from '../utils/speechHelper';
 import { Mic, MicOff } from 'lucide-react';
 
@@ -254,7 +255,7 @@ export const GovtSchemes = ({ onBack }) => {
       const profileId = localStorage.getItem('agrico_profile_id');
       if (!profileId) return;
       try {
-        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+        const apiBase = getApiBaseUrl();
         const res = await fetch(`${apiBase}/get-schemes?profile_id=${profileId}`);
         if (!res.ok) throw new Error("Backend schemes fetch failed");
         const data = await res.json();
@@ -339,7 +340,7 @@ export const GovtSchemes = ({ onBack }) => {
     
     // Save to backend database
     try {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const apiBase = getApiBaseUrl();
       const res = await fetch(`${apiBase}/apply-scheme`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -667,7 +668,7 @@ export const AIChatbot = ({ onBack, currentLang = 'English' }) => {
     setInput('');
     
     try {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const apiBase = getApiBaseUrl();
       const res = await fetch(`${apiBase}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

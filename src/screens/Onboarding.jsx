@@ -4,7 +4,7 @@ import {
   ChevronLeft, Layout, TrendingUp, Info, User
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-
+import { getApiBaseUrl } from '../utils/api';
 const Container = ({ children, title, onBack }) => (
   <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
     <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -129,7 +129,7 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
   const sendOtpApi = async () => {
     setErrorMsg('');
     try {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const apiBase = getApiBaseUrl();
       const destination = phone || email;
       if (!destination) return;
       const res = await fetch(`${apiBase}/send-otp`, {
@@ -206,7 +206,7 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
     }
 
     try {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+      const apiBase = getApiBaseUrl();
       const destination = phone || email;
       const res = await fetch(`${apiBase}/verify-otp`, {
         method: 'POST',

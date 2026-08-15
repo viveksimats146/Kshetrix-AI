@@ -1,6 +1,7 @@
 import { INDIAN_LOCATIONS } from '../utils/locations.js';
+import { getApiBaseUrl } from '../utils/api.js';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+const API_BASE = getApiBaseUrl();
 const RESOURCE_ID = '9ef84268-d588-465a-a308-a864a43d0070';
 
 const PROXIES = [
