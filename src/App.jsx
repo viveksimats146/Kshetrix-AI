@@ -442,7 +442,7 @@ export default function App() {
       // Onboarding
       case 'intro1': return <IntroScreen step={1} onNext={() => navigate('intro2')} onBack={() => navigate('welcome')} />;
       case 'intro2': return <IntroScreen step={2} onNext={() => navigate('intro3')} onBack={() => navigate('intro1')} />;
-      case 'intro3': return <IntroScreen step={3} onNext={() => navigate('profile-setup')} onBack={() => navigate('intro2')} />;
+      case 'intro3': return <IntroScreen step={3} onNext={() => navigate('login')} onBack={() => navigate('intro2')} />;
       case 'login': return <LoginScreen onNext={handleLoginNext} onSignup={() => navigate('signup')} onBack={() => navigate('welcome')} />;
       case 'signup': return (
         <SignupScreen 
