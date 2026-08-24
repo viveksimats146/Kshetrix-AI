@@ -23,6 +23,10 @@ export const ProfileSetup = ({
   setProfileState, 
   profileDistrict, 
   setProfileDistrict,
+  profileEmail,
+  setProfileEmail,
+  profilePhone,
+  setProfilePhone,
   currentLang
 }) => {
   const [states, setStates] = useState([]);
@@ -77,7 +81,29 @@ export const ProfileSetup = ({
             type="text" 
             value={profileName}
             onChange={(e) => setProfileName(e.target.value)}
-            placeholder="Ramesh Kumar" 
+            placeholder="Enter your name" 
+            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid var(--gray-light)', fontSize: '15px', outline: 'none', background: 'var(--white)', color: 'var(--black)' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--gray-dark)' }}>Phone Number</label>
+          <input 
+            type="tel" 
+            value={profilePhone || ''}
+            onChange={(e) => setProfilePhone && setProfilePhone(e.target.value)}
+            placeholder="Enter your phone number" 
+            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid var(--gray-light)', fontSize: '15px', outline: 'none', background: 'var(--white)', color: 'var(--black)' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', marginBottom: '8px', color: 'var(--gray-dark)' }}>Email Address</label>
+          <input 
+            type="email" 
+            value={profileEmail || ''}
+            onChange={(e) => setProfileEmail && setProfileEmail(e.target.value)}
+            placeholder="Enter your email address" 
             style={{ width: '100%', padding: '14px', borderRadius: '12px', border: '1px solid var(--gray-light)', fontSize: '15px', outline: 'none', background: 'var(--white)', color: 'var(--black)' }}
           />
         </div>
@@ -117,8 +143,8 @@ export const ProfileSetup = ({
 
 const CROP_CATEGORIES = {
   "Grains & Cereals": ["Wheat", "Paddy (Rice)", "Maize", "Barley", "Bajra", "Jowar", "Ragi"],
-  "Vegetables": ["Potato", "Tomato", "Onion", "Garlic", "Ginger", "Cabbage", "Cauliflower", "Brinjal", "Carrot", "Spinach", "Peas", "Pumpkin"],
-  "Fruits": ["Mango", "Apple", "Banana", "Coconut", "Orange", "Grapes", "Papaya", "Pomegranate", "Watermelon", "Guava", "Pineapple"],
+  "Vegetables": ["Potato", "Tomato", "Onion", "Garlic", "Ginger", "Cabbage", "Cauliflower", "Brinjal", "Carrot", "Spinach", "Peas", "Pumpkin", "Ladies Finger", "Ivy Gourd", "Bottle Gourd", "Bitter Gourd"],
+  "Fruits": ["Mango", "Apple", "Banana", "Coconut", "Orange", "Grapes", "Papaya", "Pomegranate", "Watermelon", "Guava", "Pineapple", "Lemon"],
   "Spices": ["Black Pepper", "Cardamom", "Turmeric", "Coriander", "Chilli", "Cumin", "Cloves"],
   "Cash Crops & Oilseeds": ["Cotton", "Sugarcane", "Soybean", "Mustard", "Groundnut", "Sunflower"]
 };

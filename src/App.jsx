@@ -386,8 +386,8 @@ export default function App() {
       );
       
       // Profile Setup
-      case 'profile-setup': return <ProfileSetup onNext={() => handleSaveProfile('crop-prefs')} onBack={() => navigate(otpBackScreen === 'login' ? 'welcome' : 'intro3')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
-      case 'edit-profile': return <ProfileSetup onNext={() => handleSaveProfile('profile')} onBack={goBack} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} currentLang={language} />;
+      case 'profile-setup': return <ProfileSetup onNext={() => handleSaveProfile('crop-prefs')} onBack={() => navigate(otpBackScreen === 'login' ? 'welcome' : 'intro3')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} profileEmail={signupEmail} setProfileEmail={setSignupEmail} profilePhone={signupPhone} setProfilePhone={setSignupPhone} currentLang={language} />;
+      case 'edit-profile': return <ProfileSetup onNext={() => handleSaveProfile('profile')} onBack={goBack} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} profileEmail={signupEmail} setProfileEmail={setSignupEmail} profilePhone={signupPhone} setProfilePhone={setSignupPhone} currentLang={language} />;
       case 'crop-prefs': return <CropPreferences onNext={() => navigate('dashboard')} onBack={() => navigate('profile-setup')} />;
       
       // Dashboard & Intelligence
@@ -530,7 +530,24 @@ export default function App() {
                 <div className="card" onClick={() => navigate('edit-profile')}>{translate('accountDetails', language)}</div>
                 <div className="card" onClick={() => navigate('schemes')}>{translate('pmKisan', language)}</div>
                 <div className="card" onClick={() => navigate('settings')}>{translate('settings', language)}</div>
-                <div className="card" onClick={() => { localStorage.removeItem('agrico_logged_in'); setCameFromOnboarding(false); navigate('welcome'); }} style={{ color: 'var(--error)' }}>Logout</div>
+                <div className="card" onClick={() => { 
+                  localStorage.removeItem('agrico_logged_in'); 
+                  localStorage.removeItem('agrico_profile_name');
+                  localStorage.removeItem('agrico_profile_state');
+                  localStorage.removeItem('agrico_profile_district');
+                  localStorage.removeItem('agrico_profile_id');
+                  localStorage.removeItem('agrico_profile_email');
+                  localStorage.removeItem('agrico_profile_phone');
+                  localStorage.removeItem('agrico_profile_photo');
+                  setProfileName('');
+                  setProfileState('');
+                  setProfileDistrict('');
+                  setSignupPhone('');
+                  setSignupEmail('');
+                  setProfilePhoto('');
+                  setCameFromOnboarding(false); 
+                  navigate('welcome'); 
+                }} style={{ color: 'var(--error)', cursor: 'pointer' }}>Logout</div>
               </div>
             </div>
 

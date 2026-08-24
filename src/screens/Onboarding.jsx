@@ -34,7 +34,7 @@ const InputField = ({ label, icon, placeholder, type = 'text', value, onChange }
 );
 
 export const LoginScreen = ({ onNext, onBack, onSignup }) => {
-  const [phoneOrEmail, setPhoneOrEmail] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
   return (
@@ -44,11 +44,11 @@ export const LoginScreen = ({ onNext, onBack, onSignup }) => {
         <p style={{ color: 'var(--gray-medium)', marginBottom: '30px' }}>Enter your credentials to continue</p>
         
         <InputField 
-          label="Phone Number / Email" 
-          icon={<Phone size={18}/>} 
-          placeholder="9876543210" 
-          value={phoneOrEmail}
-          onChange={(e) => setPhoneOrEmail(e.target.value)}
+          label="Email Address" 
+          icon={<Mail size={18}/>} 
+          placeholder="farmer@example.com" 
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <InputField 
           label="Password" 
@@ -63,7 +63,7 @@ export const LoginScreen = ({ onNext, onBack, onSignup }) => {
           <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '13px', fontWeight: '600' }} onClick={() => onNext('forgot')}>Forgot Password?</button>
         </div>
         
-        <button className="btn-primary" onClick={() => onNext('otp', phoneOrEmail)}>Login</button>
+        <button className="btn-primary" onClick={() => onNext('otp', email)}>Login</button>
         
         <div style={{ textAlign: 'center', marginTop: '40px' }}>
           <p style={{ fontSize: '14px' }}>Don't have an account? <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700' }} onClick={onSignup}>Sign Up</button></p>
@@ -92,21 +92,21 @@ export const SignupScreen = ({
       <InputField 
         label="Full Name" 
         icon={<User size={18}/>} 
-        placeholder="Ramesh Kumar" 
+        placeholder="Enter your name" 
         value={profileName}
         onChange={(e) => setProfileName(e.target.value)}
       />
       <InputField 
         label="Phone" 
         icon={<Phone size={18}/>} 
-        placeholder="9876543210" 
+        placeholder="Enter your phone number" 
         value={signupPhone}
         onChange={(e) => setSignupPhone(e.target.value)}
       />
       <InputField 
         label="Email" 
         icon={<Mail size={18}/>} 
-        placeholder="ramesh@gmail.com" 
+        placeholder="Enter your email address" 
         value={signupEmail}
         onChange={(e) => setSignupEmail(e.target.value)}
       />

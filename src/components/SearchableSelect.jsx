@@ -11,21 +11,21 @@ export const SearchableSelect = ({ label, value, options = [], onChange, loading
 
   return (
     <div style={{ marginBottom: '15px', position: 'relative' }}>
-      {label && <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px' }}>{label}</label>}
+      {label && <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', marginBottom: '6px', color: 'var(--black)' }}>{label}</label>}
       <div 
         onClick={() => setIsOpen(!isOpen)}
         style={{ 
           width: '100%', padding: '12px', borderRadius: '10px', border: '1px solid var(--gray-light)', 
-          fontSize: '14px', background: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer'
+          fontSize: '14px', background: 'var(--white)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer'
         }}
       >
-        <span style={{ color: value ? 'black' : '#999' }}>{loading ? 'Loading...' : (value || placeholder || `Select ${label}`)}</span>
+        <span style={{ color: value ? 'var(--black)' : 'var(--gray-medium)' }}>{loading ? 'Loading...' : (value || placeholder || `Select ${label}`)}</span>
         <Activity size={14} className={loading ? 'animate-spin' : ''} style={{ color: 'var(--gray-medium)' }} />
       </div>
 
       {isOpen && (
         <div style={{ 
-          position: 'absolute', top: '100%', left: 0, right: 0, background: 'white', border: '1px solid var(--gray-light)', 
+          position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--white)', border: '1px solid var(--gray-light)', 
           borderRadius: '10px', marginTop: '5px', zIndex: 100, boxShadow: 'var(--shadow-lg)', maxHeight: '300px', display: 'flex', flexDirection: 'column'
         }}>
           <div style={{ padding: '8px', borderBottom: '1px solid var(--gray-light)' }}>
@@ -34,7 +34,7 @@ export const SearchableSelect = ({ label, value, options = [], onChange, loading
               placeholder={`Search...`}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--gray-light)', fontSize: '13px' }}
+              style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--gray-light)', fontSize: '13px', background: 'var(--white)', color: 'var(--black)' }}
             />
           </div>
           <div style={{ overflowY: 'auto', flex: 1 }}>
@@ -43,7 +43,7 @@ export const SearchableSelect = ({ label, value, options = [], onChange, loading
                 <div 
                   key={opt}
                   onClick={() => { onChange(opt); setIsOpen(false); setSearch(''); }}
-                  style={{ padding: '10px 12px', fontSize: '13px', cursor: 'pointer', background: opt === value ? 'var(--primary-pale)' : 'transparent' }}
+                  style={{ padding: '10px 12px', fontSize: '13px', cursor: 'pointer', background: opt === value ? 'var(--primary-pale)' : 'transparent', color: 'var(--black)' }}
                   onMouseEnter={(e) => e.target.style.background = 'var(--gray-light)'}
                   onMouseLeave={(e) => e.target.style.background = opt === value ? 'var(--primary-pale)' : 'transparent'}
                 >
@@ -54,7 +54,7 @@ export const SearchableSelect = ({ label, value, options = [], onChange, loading
               <div style={{ padding: '20px', textAlign: 'center', fontSize: '12px', color: 'var(--gray-medium)' }}>No results found</div>
             )}
             {filteredOptions.length > 100 && (
-              <div style={{ padding: '8px', textAlign: 'center', fontSize: '11px', color: 'var(--gray-medium)', background: '#F8F9FA' }}>
+              <div style={{ padding: '8px', textAlign: 'center', fontSize: '11px', color: 'var(--gray-medium)', background: 'var(--gray-light)' }}>
                 Showing first 100 results...
               </div>
             )}

@@ -120,7 +120,8 @@ export const getCommodities = async () => {
     return [
       "Wheat", "Paddy (Rice)", "Potato", "Tomato", "Onion",
       "Cotton", "Soybean", "Sugarcane", "Maize", "Mustard",
-      "Gram (Chana)", "Tur (Arhar)", "Moong", "Urad", "Groundnut"
+      "Gram (Chana)", "Tur (Arhar)", "Moong", "Urad", "Groundnut",
+      "Lemon", "Ladies Finger", "Ivy Gourd", "Bottle Gourd", "Bitter Gourd"
     ];
   }
 };

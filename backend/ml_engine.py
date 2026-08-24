@@ -106,7 +106,9 @@ class AgricoML:
                 "Apple": 7500.0, "Mango": 5500.0, "Garlic": 9500.0, 
                 "Ginger": 8000.0, "Turmeric": 7400.0, "Black Pepper": 48000.0, 
                 "Cardamom": 1500.0, "Barley": 2100.0, "Jowar": 2900.0, 
-                "Bajra": 2500.0, "Ragi": 3800.0, "Sunflowers": 6000.0
+                "Bajra": 2500.0, "Ragi": 3800.0, "Sunflowers": 6000.0,
+                "Lemon": 4500.0, "Ladies Finger": 3200.0, "Ivy Gourd": 2800.0, 
+                "Bottle Gourd": 1800.0, "Bitter Gourd": 3500.0
             }
             # Clean crop name if it has extra text
             clean_commodity = commodity.replace(" (Rice)", "").replace(" (Chana)", "").replace(" (Arhar)", "")
@@ -173,7 +175,8 @@ class AgricoML:
             "Gram (Chana)", "Tur (Arhar)", "Moong", "Urad", "Groundnut", 
             "Coconut", "Coffee", "Tea", "Apple", "Mango", "Garlic", 
             "Ginger", "Turmeric", "Black Pepper", "Cardamom", "Barley", 
-            "Jowar", "Bajra", "Ragi", "Sunflowers"
+            "Jowar", "Bajra", "Ragi", "Sunflowers", "Lemon", "Ladies Finger", 
+            "Ivy Gourd", "Bottle Gourd", "Bitter Gourd"
         ]
         all_commodities = sorted(list(set(csv_commodities + indian_crops)))
         return {
