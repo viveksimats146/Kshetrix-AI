@@ -36,6 +36,28 @@ const InputField = ({ label, icon, placeholder, type = 'text', value, onChange }
 export const LoginScreen = ({ onNext, onBack, onSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleLogin = () => {
+    setErrorMsg('');
+    if (!email.trim()) {
+      setErrorMsg('Please enter your email address.');
+      return;
+    }
+    if (!email.includes('@')) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+    if (!password.trim()) {
+      setErrorMsg('Please enter your password.');
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters long.');
+      return;
+    }
+    onNext('otp', email);
+  };
 
   return (
     <Container title="Login" onBack={onBack}>
@@ -58,12 +80,14 @@ export const LoginScreen = ({ onNext, onBack, onSignup }) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+
+        {errorMsg && <p style={{ color: 'var(--error)', fontSize: '13px', fontWeight: '600', marginTop: '10px', marginBottom: '10px' }}>{errorMsg}</p>}
         
         <div style={{ textAlign: 'right', marginBottom: '30px' }}>
           <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '13px', fontWeight: '600' }} onClick={() => onNext('forgot')}>Forgot Password?</button>
         </div>
         
-        <button className="btn-primary" onClick={() => onNext('otp', email)}>Login</button>
+        <button className="btn-primary" onClick={handleLogin}>Login</button>
         
         <div style={{ textAlign: 'center', marginTop: '40px' }}>
           <p style={{ fontSize: '14px' }}>Don't have an account? <button style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700' }} onClick={onSignup}>Sign Up</button></p>
@@ -83,39 +107,126 @@ export const SignupScreen = ({
   setSignupPhone,
   signupEmail,
   setSignupEmail
-}) => (
-  <Container title="Sign Up" onBack={onBack}>
-    <div style={{ marginTop: '10px' }}>
-      <h3 style={{ fontSize: '24px', marginBottom: '10px' }}>Create Account</h3>
-      <p style={{ color: 'var(--gray-medium)', marginBottom: '30px' }}>Join thousands of smart farmers</p>
-      
-      <InputField 
-        label="Full Name" 
-        icon={<User size={18}/>} 
-        placeholder="Enter your name" 
-        value={profileName}
-        onChange={(e) => setProfileName(e.target.value)}
-      />
-      <InputField 
-        label="Phone" 
-        icon={<Phone size={18}/>} 
-        placeholder="Enter your phone number" 
-        value={signupPhone}
-        onChange={(e) => setSignupPhone(e.target.value)}
-      />
-      <InputField 
-        label="Email" 
-        icon={<Mail size={18}/>} 
-        placeholder="Enter your email address" 
-        value={signupEmail}
-        onChange={(e) => setSignupEmail(e.target.value)}
-      />
-      <InputField label="Password" icon={<Lock size={18}/>} placeholder="••••••••" type="password" />
-      
-      <button className="btn-primary" style={{ marginTop: '20px' }} onClick={() => onNext('otp')}>Create Account</button>
-    </div>
-  </Container>
-);
+}) => {
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSignup = () => {
+    setErrorMsg('');
+    if (!profileName.trim()) {
+      setErrorMsg('Please enter your full name.');
+      return;
+    }
+    if (!signupPhone.trim()) {
+      setErrorMsg('Please enter your phone number.');
+      return;
+    }
+    if (signupPhone.trim().length < 10) {
+      setErrorMsg('Please enter a valid 10-digit phone number.');
+      return;
+    }
+    if (!signupEmail.trim()) {
+      setErrorMsg('Please enter your email address.');
+      return;
+    }
+    if (!signupEmail.includes('@')) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+    if (!password.trim()) {
+      setErrorMsg('Please enter a password.');
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters long.');
+      return;
+    }
+    onNext('otp');
+  };
+
+  return (
+    <Container title="Sign Up" onBack={onBack}>
+      <div style={{ marginTop: '10px' }}>
+        <h3 style={{ fontSize: '24px', marginBottom: '10px' }}>Create Account</h3>
+        <p style={{ color: 'var(--gray-medium)', marginBottom: '30px' }}>Join thousands of smart farmers</p>
+        
+        <InputField 
+          label="Full Name" 
+          icon={<User size={18}/>} 
+          placeholder="Enter your name" 
+          value={profileName}
+          onChange={(e) => setProfileName(e.target.value)}
+        />
+        <InputField 
+          label="Phone" 
+          icon={<Phone size={18}/>} 
+          placeholder="Enter your phone number" 
+          value={signupPhone}
+          onChange={(e) => setSignupPhone(e.target.value)}
+        />
+        <InputField 
+          label="Email" 
+          icon={<Mail size={18}/>} 
+          placeholder="Enter your email address" 
+          value={signupEmail}
+          onChange={(e) => setSignupEmail(e.target.value)}
+        />
+        <InputField 
+          label="Password" 
+          icon={<Lock size={18}/>} 
+          placeholder="••••••••" 
+          type="password" 
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        {errorMsg && <p style={{ color: 'var(--error)', fontSize: '13px', fontWeight: '600', marginTop: '10px', marginBottom: '10px' }}>{errorMsg}</p>}
+        
+        <button className="btn-primary" style={{ marginTop: '20px' }} onClick={handleSignup}>Create Account</button>
+      </div>
+    </Container>
+  );
+};
+
+
+export const ForgotScreen = ({ onBack, onNext }) => {
+  const [email, setEmail] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleReset = () => {
+    setErrorMsg('');
+    if (!email.trim()) {
+      setErrorMsg('Please enter your email address.');
+      return;
+    }
+    if (!email.includes('@')) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+    onNext('otp', email);
+  };
+
+  return (
+    <Container title="Forgot Password" onBack={onBack}>
+      <div style={{ marginTop: '20px' }}>
+        <h3 style={{ fontSize: '24px', marginBottom: '10px' }}>Reset Password</h3>
+        <p style={{ color: 'var(--gray-medium)', marginBottom: '30px' }}>Enter your email address to receive a verification code</p>
+        
+        <InputField 
+          label="Email Address" 
+          icon={<Mail size={18}/>} 
+          placeholder="farmer@example.com" 
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        {errorMsg && <p style={{ color: 'var(--error)', fontSize: '13px', fontWeight: '600', marginTop: '10px', marginBottom: '10px' }}>{errorMsg}</p>}
+        
+        <button className="btn-primary" onClick={handleReset} style={{ marginTop: '20px' }}>Send Verification Code</button>
+      </div>
+    </Container>
+  );
+};
 
 export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
   const [code, setCode] = useState(['', '', '', '']);

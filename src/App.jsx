@@ -5,7 +5,7 @@ import './index.css';
 
 // Import Screens
 import { SplashScreen, WelcomeScreen } from './screens/BasicScreens';
-import { LoginScreen, SignupScreen, IntroScreen, OTPScreen } from './screens/Onboarding';
+import { LoginScreen, SignupScreen, IntroScreen, OTPScreen, ForgotScreen } from './screens/Onboarding';
 import { ProfileSetup, CropPreferences } from './screens/Profile';
 import { MainDashboard } from './screens/Dashboard';
 import { PredictionInput, PredictionLoading, PredictionResult } from './screens/Prediction';
@@ -382,6 +382,21 @@ export default function App() {
           onBack={() => navigate(otpBackScreen)} 
           phone={otpBackScreen === 'login' ? loginPhoneOrEmail : signupPhone} 
           email={otpBackScreen === 'login' ? '' : signupEmail} 
+        />
+      );
+      case 'forgot': return (
+        <ForgotScreen 
+          onBack={goBack} 
+          onNext={(target, payload) => {
+            if (target === 'otp') {
+              setSignupEmail(payload || '');
+              setOtpTargetScreen('profile-setup');
+              setOtpBackScreen('forgot');
+              navigate('otp');
+            } else {
+              navigate(target);
+            }
+          }}
         />
       );
       
