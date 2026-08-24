@@ -436,14 +436,14 @@ export default function App() {
 
   const renderScreen = () => {
     switch (currentScreen) {
-      case 'splash': return <SplashScreen onNext={() => navigate(localStorage.getItem('agrico_logged_in') === 'true' ? 'dashboard' : 'login')} />;
+      case 'splash': return <SplashScreen onNext={() => navigate(localStorage.getItem('agrico_logged_in') === 'true' ? 'dashboard' : 'welcome')} />;
       case 'welcome': return <WelcomeScreen onNext={() => navigate('intro1')} onLogin={() => navigate('login')} onBack={() => navigate('splash')} />;
       
       // Onboarding
       case 'intro1': return <IntroScreen step={1} onNext={() => navigate('intro2')} onBack={() => navigate('welcome')} />;
       case 'intro2': return <IntroScreen step={2} onNext={() => navigate('intro3')} onBack={() => navigate('intro1')} />;
       case 'intro3': return <IntroScreen step={3} onNext={() => navigate('profile-setup')} onBack={() => navigate('intro2')} />;
-      case 'login': return <LoginScreen onNext={handleLoginNext} onSignup={() => navigate('signup')} onBack={() => navigate('splash')} />;
+      case 'login': return <LoginScreen onNext={handleLoginNext} onSignup={() => navigate('signup')} onBack={() => navigate('welcome')} />;
       case 'signup': return (
         <SignupScreen 
           onNext={handleSignupNext} 
