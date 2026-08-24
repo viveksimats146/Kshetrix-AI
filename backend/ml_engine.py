@@ -17,8 +17,8 @@ class AgricoML:
         self.le_district = LabelEncoder()
         self.le_market = LabelEncoder()
         self.le_commodity = LabelEncoder()
-        # Configured for high-capacity training to maximize model accuracy (target 96%+)
-        self.rf_model = RandomForestRegressor(n_estimators=100, max_depth=None, n_jobs=-1, random_state=42)
+        # Optimized for Render's 512MB RAM limit to prevent SIGKILL (137) Out of Memory errors
+        self.rf_model = RandomForestRegressor(n_estimators=10, max_depth=8, random_state=42)
         self.lr_model = LinearRegression()
         self.tfidf = TfidfVectorizer(stop_words='english')
         
@@ -38,6 +38,11 @@ class AgricoML:
         self.df = self.df.dropna(subset=['Date'])
         self.df['Date_Ordinal'] = self.df['Date'].map(datetime.toordinal)
         
+        # Limit rows to keep memory usage under 512MB on Render free tier
+        if len(self.df) > 15000:
+            print(f"Limiting dataset from {len(self.df)} to 15000 rows for memory optimization...")
+            self.df = self.df.sample(n=15000, random_state=42).reset_index(drop=True)
+            
         # Encode categorical variables
         print("Encoding categories...")
         self.df['State_Enc'] = self.le_state.fit_transform(self.df['STATE'])
