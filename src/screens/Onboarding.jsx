@@ -236,20 +236,20 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
   const [errorMsg, setErrorMsg] = useState('');
   const [success, setSuccess] = useState(false);
   const refs = [useRef(), useRef(), useRef(), useRef()];
+  const destination = email || phone || '';
 
   const sendOtpApi = async () => {
     setErrorMsg('');
     try {
       const apiBase = getApiBaseUrl();
-      const destination = phone || email;
       if (!destination) return;
       const res = await fetch(`${apiBase}/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           phone_or_email: destination,
-          phone: phone || '',
-          email: email || ''
+          phone: destination.includes('@') ? '' : (phone || ''),
+          email: destination.includes('@') ? destination : (email || '')
         })
       });
       const data = await res.json();
@@ -318,7 +318,6 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
 
     try {
       const apiBase = getApiBaseUrl();
-      const destination = phone || email;
       const res = await fetch(`${apiBase}/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -394,7 +393,7 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
             <div style={{ fontSize: '50px', marginBottom: '20px' }}>📱</div>
             <h3 style={{ fontSize: '24px', marginBottom: '10px', fontWeight: '700' }}>Enter Verification Code</h3>
             <p style={{ color: 'var(--gray-medium)', fontSize: '14px', maxWidth: '300px', margin: '0 auto 30px', lineHeight: '1.6' }}>
-              We sent a 4-digit code to {phone ? `+91 ${phone.replace(/.(?=.{4})/g, '*')}` : email ? email.replace(/(?<=.).(?=[^@]*?.@)/g, '*') : 'your registered contact'}.
+              We sent a 4-digit code to {destination.includes('@') ? destination.replace(/(?<=.).(?=[^@]*?.@)/g, '*') : `+91 ${destination.replace(/.(?=.{4})/g, '*')}`}.
             </p>
 
             <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '20px' }}>
