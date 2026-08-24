@@ -436,7 +436,7 @@ export default function App() {
 
   const renderScreen = () => {
     switch (currentScreen) {
-      case 'splash': return <SplashScreen onNext={() => navigate(localStorage.getItem('agrico_logged_in') === 'true' ? 'dashboard' : 'welcome')} />;
+      case 'splash': return <SplashScreen onNext={() => navigate('welcome')} />;
       case 'welcome': return <WelcomeScreen onNext={() => navigate('intro1')} onLogin={() => navigate('login')} onBack={() => navigate('splash')} />;
       
       // Onboarding
