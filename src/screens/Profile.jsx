@@ -33,6 +33,40 @@ export const ProfileSetup = ({
   const [districts, setDistricts] = useState([]);
   const [fetchingStates, setFetchingStates] = useState(true);
   const [fetchingDistricts, setFetchingDistricts] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleContinue = () => {
+    setErrorMsg('');
+    if (!profileName || !profileName.trim()) {
+      setErrorMsg('Please enter your full name.');
+      return;
+    }
+    if (!profilePhone || !profilePhone.trim()) {
+      setErrorMsg('Please enter your phone number.');
+      return;
+    }
+    if (profilePhone.trim().length < 10) {
+      setErrorMsg('Please enter a valid 10-digit phone number.');
+      return;
+    }
+    if (!profileEmail || !profileEmail.trim()) {
+      setErrorMsg('Please enter your email address.');
+      return;
+    }
+    if (!profileEmail.includes('@')) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+    if (!profileState) {
+      setErrorMsg('Please select your state.');
+      return;
+    }
+    if (!profileDistrict || profileDistrict === 'No districts found') {
+      setErrorMsg('Please select your district.');
+      return;
+    }
+    onNext();
+  };
 
   useEffect(() => {
     getStates()
@@ -135,7 +169,9 @@ export const ProfileSetup = ({
           </select>
         </div>
 
-        <button className="btn-primary" onClick={onNext} disabled={fetchingStates || fetchingDistricts}>{translate('continue', currentLang)}</button>
+        {errorMsg && <p style={{ color: 'var(--error)', fontSize: '13px', fontWeight: '600', marginBottom: '15px' }}>{errorMsg}</p>}
+
+        <button className="btn-primary" onClick={handleContinue} disabled={fetchingStates || fetchingDistricts}>{translate('continue', currentLang)}</button>
       </div>
     </div>
   );
