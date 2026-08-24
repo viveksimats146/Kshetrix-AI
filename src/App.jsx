@@ -292,7 +292,28 @@ export default function App() {
 
   const [screenHistory, setScreenHistory] = useState([localStorage.getItem('agrico_logged_in') === 'true' ? 'dashboard' : 'welcome']);
 
-  const navigate = (screen) => {
+  // Sync with HTML5 history stack to support phone native back button and swipe-back gestures
+  useEffect(() => {
+    window.history.replaceState({ screen: currentScreen }, '');
+
+    const handlePopState = (event) => {
+      if (event.state && event.state.screen) {
+        setCurrentScreen(event.state.screen);
+        setScreenHistory(prev => {
+          const idx = prev.indexOf(event.state.screen);
+          if (idx !== -1) {
+            return prev.slice(0, idx + 1);
+          }
+          return [...prev, event.state.screen];
+        });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentScreen]);
+
+  const navigate = (screen, isPopState = false) => {
     const tabScreens = ['dashboard', 'analytics', 'crops', 'alerts', 'profile'];
     if (tabScreens.includes(screen)) {
       setScreenHistory([screen]);
@@ -300,12 +321,18 @@ export default function App() {
       setScreenHistory(prev => [...prev, screen]);
     }
     setCurrentScreen(screen);
+    
+    if (!isPopState) {
+      window.history.pushState({ screen }, '');
+    }
   };
 
   const goBack = () => {
-    if (screenHistory.length > 1) {
+    if (window.history.state && window.history.state.screen) {
+      window.history.back();
+    } else if (screenHistory.length > 1) {
       const newHistory = [...screenHistory];
-      newHistory.pop(); // Remove current screen
+      newHistory.pop();
       const prevScreen = newHistory[newHistory.length - 1];
       setScreenHistory(newHistory);
       setCurrentScreen(prevScreen);
