@@ -37,7 +37,7 @@ const getMockDataForCrop = (crop) => {
   ];
 };
 
-export const AnalyticsDashboard = ({ onBack, selectedCrop = 'Onion' }) => {
+export const AnalyticsDashboard = ({ onBack, selectedCrop = 'Tomato' }) => {
   const chartData = getMockDataForCrop(selectedCrop);
   
   return (
@@ -102,7 +102,7 @@ export const MarketMonitoring = ({ onBack }) => (
   </div>
 );
 
-export const ProfitLossAnalysis = ({ onBack, predictionResult, selectedCrop = 'Onion' }) => {
+export const ProfitLossAnalysis = ({ onBack, predictionResult, selectedCrop = 'Tomato' }) => {
   const [quintals, setQuintals] = useState(50);
 
   const isMatchingPrediction = predictionResult && (predictionResult.commodity === selectedCrop);

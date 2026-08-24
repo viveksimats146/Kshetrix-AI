@@ -44,7 +44,7 @@ const getBaselinePrice = (c) => {
   return baselines[c] || baselines[clean] || 3000;
 };
 
-export const CropDeepDive = ({ onBack, commodity = 'Onion', state = 'Maharashtra', district = 'Nashik' }) => {
+export const CropDeepDive = ({ onBack, commodity = 'Tomato', state = '', district = '' }) => {
   const base = getBaselinePrice(commodity);
   const chartData = [
     { day: 'M', price: Math.round(base * 0.92) }, 
@@ -252,7 +252,7 @@ export const PriceAlertSetup = ({ onBack, defaultState = 'Maharashtra', defaultD
     "Garlic", "Ginger", "Turmeric", "Black Pepper", "Cardamom"
   ]);
   const [markets, setMarkets] = useState([]);
-  const [selectedCommodity, setSelectedCommodity] = useState('Onion');
+  const [selectedCommodity, setSelectedCommodity] = useState('Tomato');
   const [selectedMarket, setSelectedMarket] = useState('');
   const [targetPrice, setTargetPrice] = useState('2500');
   const [loading, setLoading] = useState(true);

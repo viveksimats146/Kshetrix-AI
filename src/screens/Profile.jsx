@@ -149,8 +149,7 @@ const CROP_CATEGORIES = {
   "Cash Crops & Oilseeds": ["Cotton", "Sugarcane", "Soybean", "Mustard", "Groundnut", "Sunflower"]
 };
 
-export const CropPreferences = ({ onNext, onBack }) => {
-  const [selected, setSelected] = useState(['Onion', 'Tomato']);
+export const CropPreferences = ({ selected = [], setSelected, onNext, onBack }) => {
   const [search, setSearch] = useState('');
 
   const toggle = c => setSelected(selected.includes(c) ? selected.filter(x => x !== c) : [...selected, c]);

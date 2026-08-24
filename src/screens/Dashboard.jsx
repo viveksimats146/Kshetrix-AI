@@ -7,7 +7,7 @@ import {
 import { translate } from '../utils/translations';
 import { getCropEmoji } from '../utils/cropHelper.js';
 
-export const MainDashboard = ({ onNav, onBack, profileName, currentLang, selectedCrop = 'Onion' }) => {
+export const MainDashboard = ({ onNav, onBack, profileName, currentLang, selectedCrop = 'Tomato' }) => {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)' }}>
       {/* Header Profile Section */}

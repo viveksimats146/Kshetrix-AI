@@ -81,7 +81,7 @@ const resizeImage = (file, callback) => {
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState('splash');
   const [predictionResult, setPredictionResult] = useState(null);
-  const [formData, setFormData] = useState({ state: 'Maharashtra', district: 'Nashik', commodity: 'Onion', date: new Date().toISOString().split('T')[0] });
+  const [formData, setFormData] = useState({ state: '', district: '', commodity: '', date: new Date().toISOString().split('T')[0] });
   const [theme, setTheme] = useState(localStorage.getItem('agrico_theme') || 'classic');
   const [language, setLanguage] = useState(localStorage.getItem('agrico_lang') || 'English');
   const [profileName, setProfileName] = useState(localStorage.getItem('agrico_profile_name') || '');
@@ -98,6 +98,11 @@ export default function App() {
 
   const [wallpaper, setWallpaper] = useState(localStorage.getItem('agrico_wallpaper') || 'none');
   const [customWallpaper, setCustomWallpaper] = useState(localStorage.getItem('agrico_custom_wallpaper') || '');
+  const [cropPreferences, setCropPreferences] = useState(JSON.parse(localStorage.getItem('agrico_crop_preferences') || '[]'));
+
+  useEffect(() => {
+    localStorage.setItem('agrico_crop_preferences', JSON.stringify(cropPreferences));
+  }, [cropPreferences]);
 
   useEffect(() => {
     localStorage.setItem('agrico_custom_wallpaper', customWallpaper);
@@ -159,6 +164,10 @@ export default function App() {
           if (data.email) setSignupEmail(data.email);
           if (data.phone) setSignupPhone(data.phone);
           if (data.photo) setProfilePhoto(data.photo);
+          if (data.theme) setTheme(data.theme);
+          if (data.wallpaper) setWallpaper(data.wallpaper);
+          if (data.custom_wallpaper) setCustomWallpaper(data.custom_wallpaper);
+          if (data.crop_preferences) setCropPreferences(data.crop_preferences);
           return;
         }
       } catch (err) {
@@ -177,6 +186,10 @@ export default function App() {
           setProfileState(data.state);
           setProfileDistrict(data.district);
           if (data.photo) setProfilePhoto(data.photo);
+          if (data.theme) setTheme(data.theme);
+          if (data.wallpaper) setWallpaper(data.wallpaper);
+          if (data.custom_wallpaper) setCustomWallpaper(data.custom_wallpaper);
+          if (data.crop_preferences) setCropPreferences(data.crop_preferences);
         }
       } catch (err) {
         console.warn("Failed fallback loading profile from Supabase:", err.message);
@@ -205,6 +218,41 @@ export default function App() {
     localStorage.setItem('agrico_profile_email', signupEmail);
   }, [signupEmail]);
 
+  // Automatically save settings and preferences in the background when they change
+  useEffect(() => {
+    const profileId = localStorage.getItem('agrico_profile_id');
+    if (profileId && profileName) {
+      const saveSettingsInBackground = async () => {
+        try {
+          const apiBase = getApiBaseUrl();
+          const payload = {
+            id: profileId,
+            name: profileName,
+            state: profileState,
+            district: profileDistrict,
+            email: signupEmail,
+            phone: signupPhone,
+            photo: profilePhoto,
+            theme: theme,
+            wallpaper: wallpaper,
+            custom_wallpaper: customWallpaper || null,
+            crop_preferences: cropPreferences
+          };
+          await fetch(`${apiBase}/save-profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } catch (e) {
+          console.warn("Failed background settings save:", e.message);
+        }
+      };
+
+      const timer = setTimeout(saveSettingsInBackground, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [theme, wallpaper, customWallpaper, cropPreferences]);
+
   const handleSaveProfile = async (targetScreen) => {
     try {
       const apiBase = getApiBaseUrl();
@@ -216,7 +264,11 @@ export default function App() {
         district: profileDistrict,
         email: signupEmail || (loginPhoneOrEmail.includes('@') ? loginPhoneOrEmail : ''),
         phone: signupPhone || (loginPhoneOrEmail.includes('@') ? '' : loginPhoneOrEmail),
-        photo: profilePhoto || null
+        photo: profilePhoto || null,
+        theme: theme,
+        wallpaper: wallpaper,
+        custom_wallpaper: customWallpaper || null,
+        crop_preferences: cropPreferences
       };
 
       const res = await fetch(`${apiBase}/save-profile`, {
@@ -236,6 +288,10 @@ export default function App() {
           name: profileName,
           state: profileState,
           district: profileDistrict,
+          theme: theme,
+          wallpaper: wallpaper,
+          custom_wallpaper: customWallpaper || null,
+          crop_preferences: cropPreferences,
           updated_at: new Date().toISOString()
         };
 
@@ -430,13 +486,13 @@ export default function App() {
       // Profile Setup
       case 'profile-setup': return <ProfileSetup onNext={() => handleSaveProfile('crop-prefs')} onBack={() => navigate(otpBackScreen === 'login' ? 'welcome' : 'intro3')} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} profileEmail={signupEmail} setProfileEmail={setSignupEmail} profilePhone={signupPhone} setProfilePhone={setSignupPhone} currentLang={language} />;
       case 'edit-profile': return <ProfileSetup onNext={() => handleSaveProfile('profile')} onBack={goBack} profileName={profileName} setProfileName={setProfileName} profileState={profileState} setProfileState={setProfileState} profileDistrict={profileDistrict} setProfileDistrict={setProfileDistrict} profileEmail={signupEmail} setProfileEmail={setSignupEmail} profilePhone={signupPhone} setProfilePhone={setSignupPhone} currentLang={language} />;
-      case 'crop-prefs': return <CropPreferences onNext={() => navigate('dashboard')} onBack={() => navigate('profile-setup')} />;
+      case 'crop-prefs': return <CropPreferences selected={cropPreferences} setSelected={setCropPreferences} onNext={() => handleSaveProfile('dashboard')} onBack={() => navigate('profile-setup')} />;
       
       // Dashboard & Intelligence
-      case 'dashboard': return <MainDashboard onNav={(id) => navigate(id)} onBack={cameFromOnboarding ? () => navigate('crop-prefs') : null} profileName={profileName} currentLang={language} selectedCrop={formData.commodity} />;
-      case 'analytics': return <AnalyticsDashboard onBack={goBack} selectedCrop={formData.commodity} />;
+      case 'dashboard': return <MainDashboard onNav={(id) => navigate(id)} onBack={cameFromOnboarding ? () => navigate('crop-prefs') : null} profileName={profileName} currentLang={language} selectedCrop={formData.commodity || cropPreferences[0] || 'Tomato'} />;
+      case 'analytics': return <AnalyticsDashboard onBack={goBack} selectedCrop={formData.commodity || cropPreferences[0] || 'Tomato'} />;
       case 'market-monitor': return <MarketMonitoring onBack={goBack} />;
-      case 'profit-loss': return <ProfitLossAnalysis onBack={goBack} predictionResult={predictionResult} selectedCrop={formData.commodity} />;
+      case 'profit-loss': return <ProfitLossAnalysis onBack={goBack} predictionResult={predictionResult} selectedCrop={formData.commodity || cropPreferences[0] || 'Tomato'} />;
       
       // Prediction Flow
       case 'crops':

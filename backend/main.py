@@ -50,6 +50,9 @@ def init_supabase_db():
         ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email TEXT;
         ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone TEXT;
         ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS photo TEXT;
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'classic';
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS wallpaper TEXT DEFAULT 'none';
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS custom_wallpaper TEXT;
 
         -- Enable Row Level Security (RLS)
         ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -188,6 +191,10 @@ class ProfileSaveRequest(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     photo: Optional[str] = None
+    theme: Optional[str] = None
+    wallpaper: Optional[str] = None
+    custom_wallpaper: Optional[str] = None
+    crop_preferences: Optional[List[str]] = None
 
 class SchemeApplicationRequest(BaseModel):
     profile_id: Optional[str] = None
@@ -350,8 +357,8 @@ def save_profile(req: ProfileSaveRequest):
             exists = cur.fetchone()
             if exists:
                 cur.execute(
-                    "UPDATE public.profiles SET name = %s, state = %s, district = %s, email = %s, phone = %s, photo = %s, updated_at = NOW() WHERE id = %s",
-                    (req.name, req.state, req.district, req.email, req.phone, req.photo, profile_id)
+                    "UPDATE public.profiles SET name = %s, state = %s, district = %s, email = %s, phone = %s, photo = %s, theme = %s, wallpaper = %s, custom_wallpaper = %s, crop_preferences = %s, updated_at = NOW() WHERE id = %s",
+                    (req.name, req.state, req.district, req.email, req.phone, req.photo, req.theme, req.wallpaper, req.custom_wallpaper, req.crop_preferences, profile_id)
                 )
             else:
                 profile_id = None
@@ -360,8 +367,8 @@ def save_profile(req: ProfileSaveRequest):
             import uuid
             new_id = str(uuid.uuid4())
             cur.execute(
-                "INSERT INTO public.profiles (id, name, state, district, email, phone, photo) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                (new_id, req.name, req.state, req.district, req.email, req.phone, req.photo)
+                "INSERT INTO public.profiles (id, name, state, district, email, phone, photo, theme, wallpaper, custom_wallpaper, crop_preferences) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (new_id, req.name, req.state, req.district, req.email, req.phone, req.photo, req.theme, req.wallpaper, req.custom_wallpaper, req.crop_preferences)
             )
             profile_id = new_id
             
@@ -382,12 +389,17 @@ def get_profile(id: str):
         
     try:
         cur = conn.cursor()
-        cur.execute("SELECT id, name, state, district, email, phone, photo FROM public.profiles WHERE id = %s", (id,))
+        cur.execute("SELECT id, name, state, district, email, phone, photo, theme, wallpaper, custom_wallpaper, crop_preferences FROM public.profiles WHERE id = %s", (id,))
         row = cur.fetchone()
         cur.close()
         conn.close()
         if row:
-            return {"id": row[0], "name": row[1], "state": row[2], "district": row[3], "email": row[4], "phone": row[5], "photo": row[6]}
+            return {
+                "id": row[0], "name": row[1], "state": row[2], "district": row[3], 
+                "email": row[4], "phone": row[5], "photo": row[6],
+                "theme": row[7], "wallpaper": row[8], "custom_wallpaper": row[9],
+                "crop_preferences": row[10]
+            }
         raise HTTPException(status_code=404, detail="Profile not found.")
     except Exception as e:
         print(f"Error in get_profile: {e}")
