@@ -81,6 +81,22 @@ def init_supabase_db():
         
         DROP POLICY IF EXISTS "Allow public access to applications" ON public.scheme_applications;
         CREATE POLICY "Allow public access to applications" ON public.scheme_applications FOR ALL USING (true) WITH CHECK (true);
+
+        -- Create Mandi Prices table
+        CREATE TABLE IF NOT EXISTS public.mandi_prices (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            state TEXT NOT NULL,
+            district TEXT NOT NULL,
+            market TEXT NOT NULL,
+            commodity TEXT NOT NULL,
+            modal_price NUMERIC NOT NULL,
+            date DATE NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+        );
+
+        -- Add unique constraint to prevent duplicates
+        ALTER TABLE public.mandi_prices DROP CONSTRAINT IF EXISTS unique_mandi_price_record;
+        ALTER TABLE public.mandi_prices ADD CONSTRAINT unique_mandi_price_record UNIQUE (state, district, market, commodity, date);
         """
         cur.execute(sql)
         print("Supabase database tables verified/created successfully.")
@@ -195,6 +211,17 @@ class ProfileSaveRequest(BaseModel):
     wallpaper: Optional[str] = None
     custom_wallpaper: Optional[str] = None
     crop_preferences: Optional[List[str]] = None
+
+class MandiPriceRecord(BaseModel):
+    state: str
+    district: str
+    market: str
+    commodity: str
+    modal_price: float
+    date: str
+
+class MandiPricesSaveRequest(BaseModel):
+    records: List[MandiPriceRecord]
 
 class SchemeApplicationRequest(BaseModel):
     profile_id: Optional[str] = None
@@ -447,7 +474,58 @@ def get_schemes(profile_id: str):
     except Exception as e:
         print(f"Error in get_schemes: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch scheme applications: {str(e)}")
-
+@app.post("/save-mandi-prices")
+def save_mandi_prices(req: MandiPricesSaveRequest):
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed.")
+    
+    try:
+        cur = conn.cursor()
+        inserted_count = 0
+        for rec in req.records:
+            try:
+                c_state = rec.state.strip()
+                c_district = rec.district.strip()
+                c_market = rec.market.strip()
+                c_commodity = rec.commodity.strip()
+                
+                from datetime import datetime
+                parsed_date = datetime.strptime(rec.date, "%Y-%m-%d").date()
+                
+                cur.execute(
+                    """
+                    INSERT INTO public.mandi_prices (state, district, market, commodity, modal_price, date)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    ON CONFLICT ON CONSTRAINT unique_mandi_price_record DO NOTHING
+                    """,
+                    (c_state, c_district, c_market, c_commodity, rec.modal_price, parsed_date)
+                )
+                inserted_count += 1
+            except Exception as inner_e:
+                print(f"Skipping record due to error: {inner_e}")
+                
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        # Trigger background retraining thread asynchronously so API returns instantly
+        import threading
+        def retrain_model_in_background():
+            try:
+                agrico.load_and_preprocess()
+                agrico.train_price_models()
+                print("Background model retraining completed successfully.")
+            except Exception as train_e:
+                print(f"Background retraining failed: {train_e}")
+                
+        threading.Thread(target=retrain_model_in_background, daemon=True).start()
+        
+        return {"status": "success", "message": f"Processed {inserted_count} records. Background retraining triggered."}
+    except Exception as e:
+        conn.rollback()
+        print(f"Error saving mandi prices: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)

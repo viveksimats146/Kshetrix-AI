@@ -24,7 +24,35 @@ class AgricoML:
         
     def load_and_preprocess(self):
         print("Loading data...")
-        self.df = pd.read_csv(self.data_path)
+        db_loaded = False
+        db_url = os.environ.get("DATABASE_URL")
+        
+        if db_url:
+            try:
+                import psycopg2
+                conn = psycopg2.connect(db_url)
+                query = """
+                SELECT state as "STATE", district as "District", market as "Market", 
+                       commodity as "Commodity", modal_price as "Modal_Price", date as "Date"
+                FROM public.mandi_prices
+                ORDER BY date DESC
+                LIMIT 15000
+                """
+                self.df = pd.read_sql(query, conn)
+                conn.close()
+                if len(self.df) >= 500:
+                    print(f"Loaded {len(self.df)} records directly from Supabase database.")
+                    db_loaded = True
+            except Exception as db_err:
+                print(f"Database load failed or table empty: {db_err}. Falling back to CSV.")
+                
+        if not db_loaded:
+            self.df = pd.read_csv(self.data_path)
+            # Limit rows to keep memory usage under 512MB on Render free tier
+            if len(self.df) > 15000:
+                print(f"Limiting CSV dataset from {len(self.df)} to 15000 rows for memory optimization...")
+                self.df = self.df.sample(n=15000, random_state=42).reset_index(drop=True)
+                
         self.df = self.df.dropna(subset=['Date', 'Modal_Price', 'STATE', 'District', 'Market', 'Commodity'])
         
         # Clean string columns by stripping leading/trailing whitespace
@@ -34,14 +62,9 @@ class AgricoML:
         self.df['Commodity'] = self.df['Commodity'].astype(str).str.strip()
         
         # Convert Date to ordinal efficiently
-        self.df['Date'] = pd.to_datetime(self.df['Date'], errors='coerce', dayfirst=True)
+        self.df['Date'] = pd.to_datetime(self.df['Date'], errors='coerce')
         self.df = self.df.dropna(subset=['Date'])
         self.df['Date_Ordinal'] = self.df['Date'].map(datetime.toordinal)
-        
-        # Limit rows to keep memory usage under 512MB on Render free tier
-        if len(self.df) > 15000:
-            print(f"Limiting dataset from {len(self.df)} to 15000 rows for memory optimization...")
-            self.df = self.df.sample(n=15000, random_state=42).reset_index(drop=True)
             
         # Encode categorical variables
         print("Encoding categories...")

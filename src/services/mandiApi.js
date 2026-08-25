@@ -61,6 +61,50 @@ const fetchFromDataGov = async (params) => {
   throw new Error(`Network Error: ${lastError?.message}`);
 };
 
+const syncMandiPricesToBackend = async (records, state, district) => {
+  if (!records || records.length === 0) return;
+  try {
+    const formattedRecords = records.map(r => {
+      const recordState = r.state || r.State || r.STATE || state || '';
+      const recordDistrict = r.district || r.District || r.DISTRICT || district || '';
+      const recordMarket = r.market || r.Market || '';
+      const recordCommodity = r.commodity || r.Commodity || '';
+      const modalPrice = Number(r.modal_price || r.Modal_Price || r.modalPrice || 0);
+      
+      let arrivalDate = r.arrival_date || r.arrival_Date || r.Date || r.date || '';
+      if (arrivalDate.includes('/')) {
+        const parts = arrivalDate.split('/');
+        if (parts.length === 3) {
+          if (parts[2].length === 4) {
+            arrivalDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          }
+        }
+      } else if (!arrivalDate) {
+        arrivalDate = new Date().toISOString().split('T')[0];
+      }
+      
+      return {
+        state: recordState,
+        district: recordDistrict,
+        market: recordMarket,
+        commodity: recordCommodity,
+        modal_price: modalPrice,
+        date: arrivalDate
+      };
+    }).filter(r => r.state && r.district && r.market && r.commodity && r.modal_price > 0 && r.date);
+
+    if (formattedRecords.length === 0) return;
+
+    fetch(`${API_BASE}/save-mandi-prices`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ records: formattedRecords })
+    }).catch(e => console.warn("Failed background upload of mandi prices:", e));
+  } catch (err) {
+    console.warn("Error inside syncMandiPricesToBackend:", err);
+  }
+};
+
 export const getStates = async () => {
   return Object.keys(INDIAN_LOCATIONS).sort();
 };
@@ -139,6 +183,7 @@ export const getMarketPrices = async (state, district, market) => {
         'limit': 100
       });
       if (records && records.length > 0) {
+        syncMandiPricesToBackend(records, state, district);
         return records.map(r => ({
           commodity: r.commodity || r.Commodity,
           variety: r.variety || r.Variety || 'Other',
@@ -190,6 +235,7 @@ export const getDistrictMarketDetails = async (state, district, commodity) => {
         'limit': 100
       });
       if (records && records.length > 0) {
+        syncMandiPricesToBackend(records, state, district);
         return records.map(r => ({
           market: r.market || r.Market,
           min_price: Number(r.min_price || r.Min_Price),
