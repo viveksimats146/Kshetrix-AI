@@ -106,6 +106,44 @@ def init_supabase_db():
         """
         cur.execute(sql)
         print("Supabase database tables verified/created successfully.")
+        
+        # Seed initial Mandi Prices if empty
+        cur.execute("SELECT COUNT(*) FROM public.mandi_prices")
+        count = cur.fetchone()[0]
+        if count == 0:
+            print("mandi_prices table is empty. Seeding initial records from CSV...")
+            import pandas as pd
+            if os.path.exists(DATA_PATH):
+                df = pd.read_csv(DATA_PATH)
+                df = df.dropna(subset=['Date', 'Modal_Price', 'STATE', 'District', 'Market', 'Commodity'])
+                # Sort by date descending and take top 1000 latest rows
+                df['ParsedDate'] = pd.to_datetime(df['Date'], errors='coerce')
+                df = df.dropna(subset=['ParsedDate'])
+                df = df.sort_values(by='ParsedDate', ascending=False)
+                sample_df = df.head(1000)
+                
+                inserted = 0
+                for _, row in sample_df.iterrows():
+                    try:
+                        c_state = str(row['STATE']).strip()
+                        c_district = str(row['District']).strip()
+                        c_market = str(row['Market']).strip()
+                        c_commodity = str(row['Commodity']).strip()
+                        p_date = row['ParsedDate'].date()
+                        
+                        cur.execute(
+                            """
+                            INSERT INTO public.mandi_prices (state, district, market, commodity, modal_price, date)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                            ON CONFLICT ON CONSTRAINT unique_mandi_price_record DO NOTHING
+                            """,
+                            (c_state, c_district, c_market, c_commodity, float(row['Modal_Price']), p_date)
+                        )
+                        inserted += 1
+                    except Exception as inner_e:
+                        pass
+                print(f"Successfully seeded {inserted} records into mandi_prices table.")
+                
         cur.close()
         conn.close()
     except Exception as e:
