@@ -97,6 +97,12 @@ def init_supabase_db():
         -- Add unique constraint to prevent duplicates
         ALTER TABLE public.mandi_prices DROP CONSTRAINT IF EXISTS unique_mandi_price_record;
         ALTER TABLE public.mandi_prices ADD CONSTRAINT unique_mandi_price_record UNIQUE (state, district, market, commodity, date);
+
+        -- Enable RLS for Mandi Prices
+        ALTER TABLE public.mandi_prices ENABLE ROW LEVEL SECURITY;
+
+        DROP POLICY IF EXISTS "Allow public access to mandi_prices" ON public.mandi_prices;
+        CREATE POLICY "Allow public access to mandi_prices" ON public.mandi_prices FOR ALL USING (true) WITH CHECK (true);
         """
         cur.execute(sql)
         print("Supabase database tables verified/created successfully.")
