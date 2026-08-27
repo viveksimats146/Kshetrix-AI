@@ -9,6 +9,21 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Optional
 
+def load_env_file():
+    env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    if "=" in line:
+                        key, val = line.split("=", 1)
+                        val = val.strip().strip('"').strip("'")
+                        os.environ[key.strip()] = val
+
+# Load .env variables at startup
+load_env_file()
+
 app = FastAPI(title="Kshetrix-AI API")
 
 # Enable CORS
@@ -330,33 +345,109 @@ def send_otp(req: OTPRequest):
     
     if email:
         channels_attempted.append("email")
-        smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
-        smtp_port = int(os.environ.get("SMTP_PORT", 587))
-        smtp_user = os.environ.get("SMTP_USER")
-        smtp_password = os.environ.get("SMTP_PASSWORD")
-        sender_email = os.environ.get("SENDER_EMAIL", smtp_user)
+        brevo_api_key = os.environ.get("BREVO_API_KEY")
+        brevo_sender_email = os.environ.get("BREVO_SENDER_EMAIL")
+        brevo_sender_name = os.environ.get("BREVO_SENDER_NAME", "Kshetrix AI")
+        resend_api_key = os.environ.get("RESEND_API_KEY")
         
-        if smtp_user and smtp_password:
+        if brevo_api_key and brevo_sender_email:
             try:
-                msg = MIMEMultipart()
-                msg['From'] = sender_email
-                msg['To'] = email
-                msg['Subject'] = "Kshetrix-AI Verification Code"
+                import urllib.request
+                import json
                 
-                body = f"Welcome to Kshetrix-AI! Your verification code is: {otp}\n\nThis code will expire in 10 minutes."
-                msg.attach(MIMEText(body, 'plain'))
+                url = "https://api.brevo.com/v3/smtp/email"
+                headers = {
+                    "api-key": brevo_api_key,
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "sender": {
+                        "name": brevo_sender_name,
+                        "email": brevo_sender_email
+                    },
+                    "to": [
+                        {
+                            "email": email
+                        }
+                    ],
+                    "subject": "Kshetrix-AI Verification Code",
+                    "htmlContent": f"<p>Welcome to Kshetrix-AI! Your verification code is: <strong>{otp}</strong></p><p>This code will expire in 10 minutes.</p>"
+                }
                 
-                server = smtplib.SMTP(smtp_host, smtp_port)
-                server.starttls()
-                server.login(smtp_user, smtp_password)
-                server.sendmail(sender_email, email, msg.as_string())
-                server.quit()
-                print(f"Email sent successfully to {email}")
-                email_success = True
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers=headers,
+                    method="POST"
+                )
+                
+                with urllib.request.urlopen(req) as response:
+                    res_body = response.read().decode("utf-8")
+                    print(f"Email sent successfully via Brevo to {email}. Response: {res_body}")
+                    email_success = True
             except Exception as e:
-                print(f"Error sending email: {e}")
+                print(f"Error sending email via Brevo API: {e}")
+        elif resend_api_key:
+            try:
+                import urllib.request
+                import json
+                
+                url = "https://api.resend.com/emails"
+                headers = {
+                    "Authorization": f"Bearer {resend_api_key}",
+                    "Content-Type": "application/json"
+                }
+                payload = {
+                    "from": "onboarding@resend.dev",
+                    "to": email,
+                    "subject": "Kshetrix-AI Verification Code",
+                    "html": f"<p>Welcome to Kshetrix-AI! Your verification code is: <strong>{otp}</strong></p><p>This code will expire in 10 minutes.</p>"
+                }
+                
+                req = urllib.request.Request(
+                    url,
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers=headers,
+                    method="POST"
+                )
+                
+                with urllib.request.urlopen(req) as response:
+                    res_body = response.read().decode("utf-8")
+                    print(f"Email sent successfully via Resend to {email}. Response: {res_body}")
+                    email_success = True
+            except Exception as e:
+                print(f"Error sending email via Resend API: {e}")
         else:
-            print("WARNING: SMTP credentials not set. Cannot send real email.")
+            smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+            smtp_port = int(os.environ.get("SMTP_PORT", 587))
+            smtp_user = os.environ.get("SMTP_USER")
+            smtp_password = os.environ.get("SMTP_PASSWORD")
+            sender_email = os.environ.get("SENDER_EMAIL", smtp_user)
+            
+            if smtp_user and smtp_password:
+                try:
+                    msg = MIMEMultipart()
+                    msg['From'] = sender_email
+                    msg['To'] = email
+                    msg['Subject'] = "Kshetrix-AI Verification Code"
+                    
+                    body = f"Welcome to Kshetrix-AI! Your verification code is: {otp}\n\nThis code will expire in 10 minutes."
+                    msg.attach(MIMEText(body, 'plain'))
+                    
+                    if smtp_port == 465:
+                        server = smtplib.SMTP_SSL(smtp_host, smtp_port)
+                    else:
+                        server = smtplib.SMTP(smtp_host, smtp_port)
+                        server.starttls()
+                    server.login(smtp_user, smtp_password)
+                    server.sendmail(sender_email, email, msg.as_string())
+                    server.quit()
+                    print(f"Email sent successfully to {email}")
+                    email_success = True
+                except Exception as e:
+                    print(f"Error sending email: {e}")
+            else:
+                print("WARNING: SMTP credentials not set. Cannot send real email.")
             
     if phone:
         channels_attempted.append("sms")
