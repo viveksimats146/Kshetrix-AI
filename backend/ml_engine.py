@@ -13,6 +13,7 @@ class AgricoML:
     def __init__(self, data_path):
         self.data_path = data_path
         self.df = None
+        self.db_loaded = False
         self.le_state = LabelEncoder()
         self.le_district = LabelEncoder()
         self.le_market = LabelEncoder()
@@ -46,6 +47,7 @@ class AgricoML:
             except Exception as db_err:
                 print(f"Database load failed or table empty: {db_err}. Falling back to CSV.")
                 
+        self.db_loaded = db_loaded
         if not db_loaded:
             self.df = pd.read_csv(self.data_path)
             # Limit rows to keep memory usage under 512MB on Render free tier
