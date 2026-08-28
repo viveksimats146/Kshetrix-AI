@@ -360,7 +360,7 @@ p {
 /* Responsive Splash Logo Container */
 .splash-logo-container {
   background: #FFFFFF;
-  padding: 24px;
+  padding: 0;
   border-radius: 32px;
   box-shadow: 0 12px 40px rgba(0,0,0,0.08);
   width: 80%;
@@ -369,12 +369,13 @@ p {
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 @media (min-width: 768px) {
   .splash-logo-container {
     max-width: 480px; /* Increased size for laptop */
-    padding: 40px;
+    padding: 0;
     border-radius: 48px;
   }
 }
