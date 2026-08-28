@@ -115,9 +115,47 @@ class AgricoML:
         else:
             return "I am currently focused on market price predictions and matching you to profitable mandis. Could you rephrase your question regarding crop sales, market trends, or schemes?"
         
+    def _get_30_day_trend(self, state, district, market, commodity):
+        # Fallback level masks: 1. Specific Mandi, 2. District-wide, 3. State-wide, 4. Commodity-wide
+        for mask in [
+            (self.df['STATE'] == state) & (self.df['District'] == district) & (self.df['Market'] == market) & (self.df['Commodity'] == commodity),
+            (self.df['STATE'] == state) & (self.df['District'] == district) & (self.df['Commodity'] == commodity),
+            (self.df['STATE'] == state) & (self.df['Commodity'] == commodity),
+            (self.df['Commodity'] == commodity)
+        ]:
+            sub = self.df[mask]
+            if len(sub) >= 2:
+                sub = sub.sort_values('Date')
+                latest_date = sub['Date'].max()
+                cutoff_date = latest_date - pd.Timedelta(days=30)
+                sub_30 = sub[sub['Date'] >= cutoff_date]
+                if len(sub_30) >= 2:
+                    X_30 = sub_30['Date_Ordinal'].values.reshape(-1, 1)
+                    y_30 = sub_30['Modal_Price'].values
+                    # Fit a trendline
+                    from sklearn.linear_model import LinearRegression as _LR
+                    reg = _LR()
+                    reg.fit(X_30, y_30)
+                    latest_ord = int(latest_date.toordinal())
+                    return reg.coef_[0], reg.intercept_, latest_ord, True
+        return 0.0, 0.0, 0, False
+
     def predict_price(self, state, district, market, commodity, date_str):
         date_obj = datetime.strptime(date_str, '%Y-%m-%d')
         date_ord = date_obj.toordinal()
+        
+        # Calculate the 30-day daily update trend extrapolation
+        slope, intercept, latest_ord, has_trend = self._get_30_day_trend(state, district, market, commodity)
+        trend_val = None
+        trend_weight = 0.0
+        
+        if has_trend:
+            trend_val = slope * date_ord + intercept
+            # Prevent wild linear projections into the far future via distance decay
+            days_diff = abs(date_ord - latest_ord)
+            import math
+            decay = math.exp(-days_diff / 45) # decays over 45 days
+            trend_weight = 0.4 * decay
         
         try:
             s_enc = self.le_state.transform([state])[0]
@@ -163,6 +201,10 @@ class AgricoML:
             rf_pred = predicted_price * 1.01
             lr_pred = predicted_price * 0.99
             
+            if trend_val is not None and trend_val > 0 and trend_weight > 0:
+                rf_pred = (1 - trend_weight) * rf_pred + trend_weight * trend_val
+                lr_pred = (1 - trend_weight) * lr_pred + trend_weight * trend_val
+            
             return {
                 "random_forest": round(rf_pred, 2),
                 "linear_regression": round(lr_pred, 2),
@@ -199,6 +241,10 @@ class AgricoML:
             scaling_multiplier = base_2026 / hist_avg
             rf_pred *= scaling_multiplier
             lr_pred *= scaling_multiplier
+            
+        if trend_val is not None and trend_val > 0 and trend_weight > 0:
+            rf_pred = (1 - trend_weight) * rf_pred + trend_weight * trend_val
+            lr_pred = (1 - trend_weight) * lr_pred + trend_weight * trend_val
             
         return {
             "random_forest": round(rf_pred, 2),
