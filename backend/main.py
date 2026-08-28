@@ -120,6 +120,49 @@ def init_supabase_db():
         CREATE POLICY "Allow public access to mandi_prices" ON public.mandi_prices FOR ALL USING (true) WITH CHECK (true);
         """
         cur.execute(sql)
+        
+        # Check if mandi_prices table is empty or has very few records
+        cur.execute("SELECT COUNT(*) FROM public.mandi_prices")
+        count = cur.fetchone()[0]
+        if count < 500:
+            print(f"Supabase mandi_prices table has only {count} records. Populating baseline dataset from CSV...")
+            csv_path = os.path.join(os.path.dirname(__file__), "..", "Agriculture_price_dataset.csv")
+            if os.path.exists(csv_path):
+                import pandas as pd
+                df = pd.read_csv(csv_path, nrows=15000)
+                
+                records = []
+                for _, row in df.iterrows():
+                    r_date = row.get('Date', '')
+                    if not r_date:
+                        from datetime import date
+                        r_date = date.today().strftime("%Y-%m-%d")
+                    elif '/' in r_date:
+                        parts = r_date.split('/')
+                        if len(parts) == 3 and len(parts[2]) == 4:
+                            r_date = f"{parts[2]}-{parts[1]}-{parts[0]}"
+                    
+                    records.append((
+                        row['STATE'].strip(),
+                        row['District'].strip(),
+                        row['Market'].strip(),
+                        row['Commodity'].strip(),
+                        float(row['Modal_Price']),
+                        r_date
+                    ))
+                
+                # Bulk insert in batches of 1000
+                batch_size = 1000
+                for i in range(0, len(records), batch_size):
+                    batch = records[i:i+batch_size]
+                    args_str = ",".join(cur.mogrify("(%s,%s,%s,%s,%s,%s)", x).decode('utf-8') for x in batch)
+                    cur.execute(f"""
+                        INSERT INTO public.mandi_prices (state, district, market, commodity, modal_price, date)
+                        VALUES {args_str}
+                        ON CONFLICT ON CONSTRAINT unique_mandi_price_record DO NOTHING
+                    """)
+                print(f"Successfully populated {len(records)} baseline records into Supabase.")
+        
         cur.close()
         conn.close()
     except Exception as e:
