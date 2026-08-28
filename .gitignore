@@ -24,3 +24,11 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Environment Variables — NEVER commit secrets
+.env
+.env.*
+!.env.example
+
+# Security scan reports
+security-reports/
