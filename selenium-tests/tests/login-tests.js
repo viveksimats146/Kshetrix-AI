@@ -23,13 +23,19 @@ async function runLoginTests() {
     await driver.get('http://localhost:5173');
     console.log("Navigated to: http://localhost:5173");
     
-    // 2. Wait for Splash Screen and click Get Started / Welcome button
-    await driver.wait(until.elementLocated(By.xpath("//button[contains(text(), 'Get Started') or contains(text(), 'Login')]")), 10000);
-    const welcomeBtn = await driver.findElement(By.xpath("//button[contains(text(), 'Get Started') or contains(text(), 'Login')]"));
-    await welcomeBtn.click();
-    console.log("Passed Splash/Welcome Screen.");
+    // 2. Wait for Splash Screen and click Get Started button
+    await driver.wait(until.elementLocated(By.xpath("//button[contains(text(), 'Get Started')]")), 10000);
+    const getStartedBtn = await driver.findElement(By.xpath("//button[contains(text(), 'Get Started')]"));
+    await getStartedBtn.click();
+    console.log("Passed Splash Screen.");
 
-    // 3. Navigate to Login form inputs
+    // 3. Wait for Welcome Screen and click 'I already have an account' to go to Login
+    await driver.wait(until.elementLocated(By.xpath("//button[contains(text(), 'I already have an account')]")), 10000);
+    const loginLinkBtn = await driver.findElement(By.xpath("//button[contains(text(), 'I already have an account')]"));
+    await loginLinkBtn.click();
+    console.log("Passed Welcome Screen. Navigated to Login Form.");
+
+    // 4. Navigate to Login form inputs
     await driver.wait(until.elementLocated(By.xpath("//input[@placeholder='farmer@example.com']")), 5000);
     const emailInput = await driver.findElement(By.xpath("//input[@placeholder='farmer@example.com']"));
     const passwordInput = await driver.findElement(By.xpath("//input[@placeholder='••••••••']"));
@@ -78,12 +84,22 @@ async function runLoginTests() {
     await verifyButton.click();
     console.log("Submitted Verification request.");
 
-    // Wait for redirect to dashboard (logged in state)
-    await driver.wait(until.urlContains('dashboard'), 10000);
-    console.log("SUCCESS: Logged in and redirected to home dashboard!");
+    // Wait for redirect to profile setup screen elements (logged in state)
+    await driver.wait(until.elementLocated(By.xpath("//input[@placeholder='Enter your name']")), 10000);
+    console.log("SUCCESS: Logged in and redirected to profile setup page!");
 
   } catch (error) {
     console.error("TEST ERROR: E2E Suite failed: ", error);
+    try {
+      const currentUrl = await driver.getCurrentUrl();
+      console.log("Current URL during failure:", currentUrl);
+      const pageSource = await driver.getPageSource();
+      console.log("------------------ PAGE SOURCE ------------------");
+      console.log(pageSource.slice(0, 1500)); // Print first 1500 chars of HTML
+      console.log("-------------------------------------------------");
+    } catch (e) {
+      console.log("Failed to extract page source.");
+    }
   } finally {
     // Terminate browser session
     await driver.quit();
