@@ -255,19 +255,14 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
       const data = await res.json();
       if (data.status === 'success') {
         if (data.code) {
-          setSimulatedCode(data.code);
-          setShowNotification(true);
-        } else {
-          setSimulatedCode('');
-          setShowNotification(false);
+          console.log("Developer notice: OTP code is:", data.code);
         }
       } else {
         setErrorMsg(data.message || 'Failed to send verification code.');
       }
     } catch (e) {
       console.warn("OTP send error:", e);
-      setSimulatedCode('4821');
-      setShowNotification(true);
+      setErrorMsg('Failed to connect to the server. Please check your network connection.');
     }
   };
 
@@ -298,6 +293,24 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
   const handleKeyDown = (e, index) => {
     if (e.key === 'Backspace' && code[index] === '' && index > 0) {
       refs[index - 1].current.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text');
+    if (/^\d+$/.test(pasteData)) {
+      const pastedCode = pasteData.slice(0, 4).split('');
+      const newCode = [...code];
+      pastedCode.forEach((digit, idx) => {
+        if (idx < 4) {
+          newCode[idx] = digit;
+        }
+      });
+      setCode(newCode);
+      setErrorMsg('');
+      const nextFocusIdx = Math.min(pastedCode.length, 3);
+      refs[nextFocusIdx].current.focus();
     }
   };
 
@@ -355,26 +368,7 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--off-white)', position: 'relative' }}>
-      {showNotification && (
-        <motion.div 
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 15 }}
-          style={{ 
-            position: 'absolute', top: 0, left: '20px', right: '20px',
-            background: 'rgba(27, 67, 50, 0.95)', color: 'white',
-            padding: '15px 20px', borderRadius: '16px', zIndex: 1000,
-            boxShadow: '0 8px 30px rgba(0,0,0,0.15)', backdropFilter: 'blur(10px)',
-            display: 'flex', alignItems: 'center', gap: '12px'
-          }}
-        >
-          <span>💬</span>
-          <div style={{ flex: 1 }}>
-            <h4 style={{ fontSize: '13px', fontWeight: '800', color: 'var(--accent)' }}>AGRICO SECURITY</h4>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.9)', margin: 0 }}>Your verification code is: <strong style={{ fontSize: '14px', color: 'white' }}>{simulatedCode}</strong></p>
-          </div>
-          <button onClick={() => setShowNotification(false)} style={{ background: 'none', border: 'none', color: 'white', opacity: 0.6, fontSize: '16px', cursor: 'pointer' }}>×</button>
-        </motion.div>
-      )}
+
 
       <div style={{ padding: '20px 20px 20px', display: 'flex', alignItems: 'center', gap: '15px' }}>
         <button onClick={onBack} style={{ background: 'var(--white)', border: 'none', padding: '8px', borderRadius: '10px', boxShadow: 'var(--shadow-sm)', cursor: 'pointer' }}><ChevronLeft /></button>
@@ -402,10 +396,13 @@ export const OTPScreen = ({ onVerify, onBack, phone, email }) => {
                   key={idx}
                   ref={refs[idx]}
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   maxLength="1"
                   value={digit}
                   onChange={(e) => handleChange(e.target.value, idx)}
                   onKeyDown={(e) => handleKeyDown(e, idx)}
+                  onPaste={handlePaste}
                   style={{
                     width: '60px', height: '60px', borderRadius: '14px',
                     border: errorMsg ? '2px solid var(--error)' : '1px solid var(--gray-light)',

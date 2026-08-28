@@ -761,17 +761,17 @@ export const SettingsScreen = ({ onBack, theme, setTheme, wallpaper = 'none', se
 
   const wallpapers = [
     { id: 'none', label: 'None', preview: '#CCCCCC' },
-    { id: 'forest', label: 'Forest', preview: 'url(/wallpapers/forest.jpg)' },
-    { id: 'ocean', label: 'Ocean', preview: 'url(/wallpapers/ocean.jpg)' },
-    { id: 'mountains', label: 'Mountains', preview: 'url(/wallpapers/mountains.jpg)' },
-    { id: 'sunset', label: 'Sunset', preview: 'url(/wallpapers/sunset.jpg)' },
-    { id: 'meadow', label: 'Meadow', preview: 'url(/wallpapers/meadow.jpg)' },
-    { id: 'aurora', label: 'Aurora', preview: 'url(/wallpapers/aurora.jpg)' },
-    { id: 'blossoms', label: 'Blossoms', preview: 'url(/wallpapers/blossoms.jpg)' },
-    { id: 'tropical', label: 'Tropical', preview: 'url(/wallpapers/tropical.jpg)' },
-    { id: 'ruby', label: 'Ruby', preview: 'url(/wallpapers/ruby.jpg)' },
-    { id: 'jungle', label: 'Jungle', preview: 'url(/wallpapers/jungle.jpg)' },
-    { id: 'autumn', label: 'Autumn', preview: 'url(/wallpapers/autumn.jpg)' },
+    { id: 'forest', label: 'Forest', preview: 'url(./wallpapers/forest.jpg)' },
+    { id: 'ocean', label: 'Ocean', preview: 'url(./wallpapers/ocean.jpg)' },
+    { id: 'mountains', label: 'Mountains', preview: 'url(./wallpapers/mountains.jpg)' },
+    { id: 'sunset', label: 'Sunset', preview: 'url(./wallpapers/sunset.jpg)' },
+    { id: 'meadow', label: 'Meadow', preview: 'url(./wallpapers/meadow.jpg)' },
+    { id: 'aurora', label: 'Aurora', preview: 'url(./wallpapers/aurora.jpg)' },
+    { id: 'blossoms', label: 'Blossoms', preview: 'url(./wallpapers/blossoms.jpg)' },
+    { id: 'tropical', label: 'Tropical', preview: 'url(./wallpapers/tropical.jpg)' },
+    { id: 'ruby', label: 'Ruby', preview: 'url(./wallpapers/ruby.jpg)' },
+    { id: 'jungle', label: 'Jungle', preview: 'url(./wallpapers/jungle.jpg)' },
+    { id: 'autumn', label: 'Autumn', preview: 'url(./wallpapers/autumn.jpg)' },
     { id: 'custom', label: 'Custom 🖼️', preview: customWallpaper ? `url(${customWallpaper})` : 'linear-gradient(135deg, #4a00e0 0%, #8e2de2 100%)' }
   ];
 

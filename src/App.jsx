@@ -24,18 +24,18 @@ import { getApiBaseUrl } from './utils/api';
 
 export const WALLPAPERS = {
   none: '',
-  forest: '/wallpapers/forest.jpg',
-  ocean: '/wallpapers/ocean.jpg',
-  mountains: '/wallpapers/mountains.jpg',
-  sunset: '/wallpapers/sunset.jpg',
-  meadow: '/wallpapers/meadow.jpg',
-  aurora: '/wallpapers/aurora.jpg',
-  blossoms: '/wallpapers/blossoms.jpg',
-  tropical: '/wallpapers/tropical.jpg',
-  ruby: '/wallpapers/ruby.jpg',
-  jungle: '/wallpapers/jungle.jpg',
-  autumn: '/wallpapers/autumn.jpg',
-  custom: '/wallpapers/custom.jpg'
+  forest: './wallpapers/forest.jpg',
+  ocean: './wallpapers/ocean.jpg',
+  mountains: './wallpapers/mountains.jpg',
+  sunset: './wallpapers/sunset.jpg',
+  meadow: './wallpapers/meadow.jpg',
+  aurora: './wallpapers/aurora.jpg',
+  blossoms: './wallpapers/blossoms.jpg',
+  tropical: './wallpapers/tropical.jpg',
+  ruby: './wallpapers/ruby.jpg',
+  jungle: './wallpapers/jungle.jpg',
+  autumn: './wallpapers/autumn.jpg',
+  custom: './wallpapers/custom.jpg'
 };
 
 import { 
