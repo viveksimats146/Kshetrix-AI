@@ -24,17 +24,7 @@ export const SplashScreen = ({ onNext }) => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          style={{
-            background: '#FFFFFF',
-            padding: '24px',
-            borderRadius: '32px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.08)',
-            maxWidth: '320px',
-            width: '80%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
+          className="splash-logo-container"
         >
           <img 
             src={logoImg} 
