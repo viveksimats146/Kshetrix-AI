@@ -54,6 +54,7 @@ ALLOWED_ORIGINS = [
     "http://localhost:4173",
     "https://kshetrix-ai.onrender.com",
     "https://viveksimats146.github.io",
+    "https://appassets.androidplatform.net",
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -447,7 +448,10 @@ def send_otp(req: OTPRequest, request: Request = None):
         if phone:
             otp_store[phone] = otp_entry
 
-    print(f"OTP generated and sent for: {'email' if email else 'phone'}")  # Do NOT log OTP value
+    if not IS_PRODUCTION:
+        print(f"DEBUG [Local Dev Only]: Generated OTP is {otp} for {req.phone_or_email}")
+    else:
+        print(f"OTP generated and sent for: {'email' if email else 'phone'}")
     
     email_success = False
     sms_success = False
