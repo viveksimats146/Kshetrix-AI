@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite\" \"cd backend && uvicorn main:app --host 0.0.0.0 --port 8001 --reload\"",
+    "dev": "concurrently \"vite\" \"cd backend && uvicorn main:app --host 0.0.0.0 --port 8001 --reload --header server:Kshetrix-API\"",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -14,7 +14,9 @@
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "recharts": "^2.7.2"
+    "recharts": "^2.7.2",
+    "selenium-webdriver": "^4.48.0",
+    "webdriverio": "^9.31.4"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",

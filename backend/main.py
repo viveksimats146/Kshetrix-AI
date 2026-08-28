@@ -1,10 +1,12 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
 from ml_engine import AgricoML
 import os
-import random
+import secrets
 import smtplib
+import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Optional
@@ -24,16 +26,45 @@ def load_env_file():
 # Load .env variables at startup
 load_env_file()
 
-app = FastAPI(title="Kshetrix-AI API")
+# Disable Swagger docs in production
+IS_PRODUCTION = os.environ.get("ENV", "development") == "production"
+app = FastAPI(
+    title="Kshetrix-AI API",
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+    openapi_url=None if IS_PRODUCTION else "/openapi.json"
+)
 
-# Enable CORS
+# Security Headers Middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"]  = "nosniff"
+        response.headers["X-Frame-Options"]          = "DENY"
+        response.headers["X-XSS-Protection"]         = "1; mode=block"
+        response.headers["Referrer-Policy"]           = "strict-origin-when-cross-origin"
+        response.headers["Cache-Control"]             = "no-store"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Restrict CORS to known origins only
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "https://kshetrix-ai.onrender.com",
+    "https://viveksimats146.github.io",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Accept"],
 )
+
+# In-memory rate limiter: {ip_or_email: [timestamp, ...]} 
+otp_rate_store: dict = {}
 
 # Initialize ML Engine
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "Agriculture_price_dataset.csv")
@@ -200,7 +231,19 @@ def chat(req: ChatRequest):
 
 @app.post("/predict")
 def predict(req: PredictionRequest):
-    result = agrico.predict_price(req.state, req.district, req.market, req.commodity, req.date)
+    # Input validation — reject empty/invalid fields gracefully with 400
+    if not req.state.strip() or not req.district.strip() or not req.market.strip() or not req.commodity.strip():
+        raise HTTPException(status_code=400, detail="state, district, market and commodity fields must not be empty.")
+    if req.date.strip():
+        try:
+            from datetime import datetime as _dt
+            _dt.strptime(req.date.strip(), "%Y-%m-%d")
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid date format '{req.date}'. Expected YYYY-MM-DD.")
+    try:
+        result = agrico.predict_price(req.state, req.district, req.market, req.commodity, req.date)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Prediction error: {str(e)}")
     if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
     return result
@@ -331,20 +374,44 @@ class SchemeApplicationRequest(BaseModel):
     ifsc: str
     tracking_id: str
 
-otp_store = {}
+# otp_store: {key: {"code": str, "expires_at": float}}
+otp_store: dict = {}
+
+OTP_TTL_SECONDS     = 600   # 10 minutes
+OTP_MAX_ATTEMPTS    = 5     # max verify attempts per key
+OTP_RATE_WINDOW     = 900   # 15 minutes window for send-otp
+OTP_MAX_SENDS       = 3     # max OTP sends in that window
+
+# Track failed verify attempts per key
+otp_fail_counts: dict = {}
 
 @app.post("/send-otp")
-def send_otp(req: OTPRequest):
-    otp = str(random.randint(1000, 9999))
-    otp_store[req.phone_or_email] = otp
-    
+def send_otp(req: OTPRequest, request: Request = None):
+    key = req.phone_or_email
+
+    # Rate limit: max OTP_MAX_SENDS sends per OTP_RATE_WINDOW seconds
+    now = time.time()
+    sends = otp_rate_store.get(key, [])
+    sends = [t for t in sends if now - t < OTP_RATE_WINDOW]
+    if len(sends) >= OTP_MAX_SENDS:
+        raise HTTPException(status_code=429, detail="Too many OTP requests. Please wait 15 minutes before trying again.")
+    sends.append(now)
+    otp_rate_store[key] = sends
+
+    # Generate cryptographically secure 4-digit OTP
+    otp = str(secrets.randbelow(9000) + 1000)
+    expires_at = now + OTP_TTL_SECONDS
+    otp_store[req.phone_or_email] = {"code": otp, "expires_at": expires_at}
+    otp_fail_counts.pop(req.phone_or_email, None)
+
     email = req.email
     phone = req.phone
     
+    otp_entry = {"code": otp, "expires_at": expires_at}
     if not email and not phone:
         if "@" in req.phone_or_email:
             email = req.phone_or_email
-            otp_store[email] = otp
+            otp_store[email] = otp_entry
             conn = get_db_connection()
             if conn:
                 try:
@@ -353,14 +420,14 @@ def send_otp(req: OTPRequest):
                     row = cur.fetchone()
                     if row and row[0]:
                         phone = row[0]
-                        otp_store[phone] = otp
+                        otp_store[phone] = otp_entry
                     cur.close()
                     conn.close()
                 except Exception as e:
                     print(f"Error looking up phone: {e}")
         else:
             phone = req.phone_or_email
-            otp_store[phone] = otp
+            otp_store[phone] = otp_entry
             conn = get_db_connection()
             if conn:
                 try:
@@ -369,18 +436,18 @@ def send_otp(req: OTPRequest):
                     row = cur.fetchone()
                     if row and row[0]:
                         email = row[0]
-                        otp_store[email] = otp
+                        otp_store[email] = otp_entry
                     cur.close()
                     conn.close()
                 except Exception as e:
                     print(f"Error looking up email: {e}")
     else:
         if email:
-            otp_store[email] = otp
+            otp_store[email] = otp_entry
         if phone:
-            otp_store[phone] = otp
+            otp_store[phone] = otp_entry
 
-    print(f"Generated OTP {otp} for phone: {phone}, email: {email}")
+    print(f"OTP generated and sent for: {'email' if email else 'phone'}")  # Do NOT log OTP value
     
     email_success = False
     sms_success = False
@@ -529,20 +596,43 @@ def send_otp(req: OTPRequest):
         }
     else:
         return {
-            "status": "success", 
-            "message": "OTP generated (Simulation mode)", 
-            "code": otp,
+            "status": "success",
+            "message": "OTP sent in simulation mode. Check your registered email or phone.",
             "channels": channels_attempted
         }
 
 @app.post("/verify-otp")
 def verify_otp(req: OTPVerifyRequest):
-    stored_otp = otp_store.get(req.phone_or_email)
-    # Support master bypass code '4821' for E2E test automation
-    if req.code == "4821" or (stored_otp and stored_otp == req.code):
-        if req.phone_or_email in otp_store:
-            del otp_store[req.phone_or_email]
+    key = req.phone_or_email
+
+    # Input validation: OTP must be exactly 4 digits
+    if not req.code or not req.code.isdigit() or len(req.code) != 4:
+        raise HTTPException(status_code=400, detail="OTP must be exactly 4 numeric digits.")
+
+    # Check fail attempts (max OTP_MAX_ATTEMPTS)
+    fail_count = otp_fail_counts.get(key, 0)
+    if fail_count >= OTP_MAX_ATTEMPTS:
+        raise HTTPException(status_code=429, detail="Too many failed attempts. Please request a new OTP.")
+
+    stored = otp_store.get(key)
+    now    = time.time()
+
+    if not stored:
+        raise HTTPException(status_code=400, detail="No OTP found. Please request a new one.")
+
+    # Check expiry
+    if now > stored["expires_at"]:
+        otp_store.pop(key, None)
+        raise HTTPException(status_code=400, detail="OTP has expired. Please request a new one.")
+
+    # Verify the code (no hardcoded bypasses)
+    if stored["code"] == req.code:
+        otp_store.pop(key, None)
+        otp_fail_counts.pop(key, None)
         return {"status": "success", "message": "OTP verified successfully."}
+
+    # Wrong code — increment fail counter
+    otp_fail_counts[key] = fail_count + 1
     return {"status": "error", "message": "Invalid verification code."}
 
 @app.post("/save-profile")
