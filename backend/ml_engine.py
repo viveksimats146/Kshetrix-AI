@@ -261,7 +261,7 @@ class AgricoML:
             "Cotton", "Soybean", "Sugarcane", "Maize", "Mustard", 
             "Gram (Chana)", "Tur (Arhar)", "Moong", "Urad", "Groundnut", 
             "Coconut", "Coffee", "Tea", "Apple", "Mango", "Garlic", 
-            "Ginger", "Turmeric", "Black Pepper", "Cardamom", "Barley", 
+            "Ginger", "Turmeric", "Black Pepper", "Cardamom", "Chilli", "Barley", 
             "Jowar", "Bajra", "Ragi", "Sunflowers", "Lemon", "Ladies Finger", 
             "Ivy Gourd", "Bottle Gourd", "Bitter Gourd"
         ]
