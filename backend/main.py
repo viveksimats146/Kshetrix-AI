@@ -324,11 +324,110 @@ def read_root():
 def chat(req: ChatRequest):
     return {"response": agrico.get_chat_response(req.message)}
 
+def fetch_and_save_realtime_crop_data(state: str, district: str, api_key: str = None):
+    if not api_key:
+        api_key = os.environ.get("DATA_GOV_API_KEY")
+    if not api_key:
+        conn = get_db_connection()
+        if conn:
+            try:
+                cur = conn.cursor()
+                cur.execute("SELECT data_gov_api_key FROM public.profiles WHERE data_gov_api_key IS NOT NULL AND data_gov_api_key != '' LIMIT 1")
+                row = cur.fetchone()
+                if row:
+                    api_key = row[0]
+                cur.close()
+                conn.close()
+            except Exception as e:
+                print(f"Failed to lookup stored key: {e}")
+                
+    if not api_key:
+        return 0
+        
+    resource_id = "9ef84268-d588-465a-a308-a864a43d0070"
+    import urllib.parse
+    state_enc = urllib.parse.quote(state)
+    dist_enc = urllib.parse.quote(district)
+    
+    url = f"https://api.data.gov.in/resource/{resource_id}?api-key={api_key}&format=json&limit=50&filters[state]={state_enc}&filters[district]={dist_enc}"
+    
+    try:
+        import requests
+        print(f"On-demand fetch: querying live mandi updates for {state}, {district}...")
+        r = requests.get(url, timeout=5)
+        if r.status_code == 200:
+            data = r.json()
+            records = data.get("records", [])
+            if not records:
+                return 0
+                
+            conn = get_db_connection()
+            if not conn:
+                return 0
+            cur = conn.cursor()
+            inserted = 0
+            for rec in records:
+                try:
+                    rec_state = (rec.get("state") or rec.get("State") or rec.get("STATE") or "").strip().title()
+                    rec_district = (rec.get("district") or rec.get("District") or rec.get("DISTRICT") or "").strip().title()
+                    rec_market = (rec.get("market") or rec.get("Market") or "").strip().title()
+                    rec_commodity = (rec.get("commodity") or rec.get("Commodity") or "").strip().title()
+                    
+                    # Normalize Paddy/Rice commodity names
+                    if "Rice" in rec_commodity or "Paddy" in rec_commodity:
+                        rec_commodity = "Rice"
+                        
+                    modal_price = float(rec.get("modal_price") or rec.get("Modal_Price") or rec.get("modalPrice") or 0)
+                    arrival_date = rec.get("arrival_date") or rec.get("arrival_Date") or ""
+                    
+                    from datetime import date
+                    if "/" in arrival_date:
+                        parts = arrival_date.split("/")
+                        if len(parts) == 3 and len(parts[2]) == 4:
+                            parsed_date = date(int(parts[2]), int(parts[1]), int(parts[0]))
+                        else:
+                            parsed_date = date.today()
+                    else:
+                        parsed_date = date.today()
+                        
+                    if rec_state and rec_district and rec_market and rec_commodity and modal_price > 0:
+                        cur.execute(
+                            """
+                            INSERT INTO public.mandi_prices (state, district, market, commodity, modal_price, date)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                            ON CONFLICT ON CONSTRAINT unique_mandi_price_record DO UPDATE 
+                            SET modal_price = EXCLUDED.modal_price, date = EXCLUDED.date
+                            """,
+                            (rec_state, rec_district, rec_market, rec_commodity, modal_price, parsed_date)
+                        )
+                        inserted += 1
+                except Exception as rec_err:
+                    print(f"Error parsing record: {rec_err}")
+            conn.commit()
+            cur.close()
+            conn.close()
+            
+            if inserted > 0:
+                # Refresh ML dataset with newly fetched live mandi data
+                agrico.load_and_preprocess()
+                agrico.train_price_models()
+                print(f"Loaded and updated {inserted} real-time mandi prices for {state}, {district} into local ML engine.")
+            return inserted
+    except Exception as e:
+        print(f"Failed to fetch on-demand real-time mandi data: {e}")
+    return 0
+
 @app.post("/predict")
 def predict(req: PredictionRequest):
     # Input validation — reject empty/invalid fields gracefully with 400
     if not req.state.strip() or not req.district.strip() or not req.market.strip() or not req.commodity.strip():
         raise HTTPException(status_code=400, detail="state, district, market and commodity fields must not be empty.")
+        
+    # Attempt real-time data sync for the requested district
+    try:
+        fetch_and_save_realtime_crop_data(req.state, req.district)
+    except Exception as sync_e:
+        print(f"Skipping dynamic on-demand sync: {sync_e}")
     if req.date.strip():
         try:
             from datetime import datetime as _dt
