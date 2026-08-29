@@ -1,9 +1,8 @@
 export const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8001';
-    }
+  // During local development, route to localhost:8001
+  if (import.meta.env.DEV) {
+    return 'http://localhost:8001';
   }
-  return 'https://kshetrix-backend.onrender.com';
+  // Otherwise, default to the whitelisted production backend URL
+  return 'https://kshetrix-ai.onrender.com';
 };

@@ -58,10 +58,10 @@ class AgricoML:
         self.df = self.df.dropna(subset=['Date', 'Modal_Price', 'STATE', 'District', 'Market', 'Commodity'])
         
         # Clean string columns by stripping leading/trailing whitespace
-        self.df['STATE'] = self.df['STATE'].astype(str).str.strip()
-        self.df['District'] = self.df['District'].astype(str).str.strip()
-        self.df['Market'] = self.df['Market'].astype(str).str.strip()
-        self.df['Commodity'] = self.df['Commodity'].astype(str).str.strip()
+        self.df['STATE'] = self.df['STATE'].astype(str).str.strip().str.title()
+        self.df['District'] = self.df['District'].astype(str).str.strip().str.title()
+        self.df['Market'] = self.df['Market'].astype(str).str.strip().str.title()
+        self.df['Commodity'] = self.df['Commodity'].astype(str).str.strip().str.title()
         
         # Convert Date to ordinal efficiently
         self.df['Date'] = pd.to_datetime(self.df['Date'], errors='coerce')
@@ -142,6 +142,21 @@ class AgricoML:
         return 0.0, 0.0, 0, 0.0, False
 
     def predict_price(self, state, district, market, commodity, date_str):
+        state = state.strip().title()
+        district = district.strip().title()
+        market = market.strip().title()
+        commodity = commodity.strip().title()
+        
+        # Standardize commodity names to match dataset values
+        commodity_mapping = {
+            "Paddy (Rice)": "Rice",
+            "Paddy": "Rice",
+            "Paddy(Rice)": "Rice",
+            "Rice": "Rice",
+            "Paddy (Rice)": "Rice"
+        }
+        commodity = commodity_mapping.get(commodity, commodity)
+        
         date_obj = datetime.strptime(date_str, '%Y-%m-%d')
         date_ord = date_obj.toordinal()
         
@@ -166,15 +181,15 @@ class AgricoML:
         except ValueError:
             # Procedural fallback for new location/commodity combinations
             crop_baselines = {
-                "Wheat": 2700.0, "Paddy (Rice)": 2400.0, "Potato": 2100.0, 
+                "Wheat": 2700.0, "Paddy (Rice)": 2400.0, "Rice": 2400.0, "Potato": 2100.0, 
                 "Tomato": 3500.0, "Onion": 3800.0, "Cotton": 7500.0, 
                 "Soybean": 4800.0, "Sugarcane": 330.0, "Maize": 2200.0, 
                 "Mustard": 5600.0, "Gram (Chana)": 5800.0, "Tur (Arhar)": 10500.0, 
                 "Moong": 8200.0, "Urad": 8800.0, "Groundnut": 7200.0, 
                 "Coconut": 13500.0, "Coffee": 16500.0, "Tea": 200.0, 
-                "Apple": 7500.0, "Mango": 5500.0, "Garlic": 9500.0, 
+                "Apple": 7500.0, "Mango": 5500.0, "Garlic": 9500.0,
                 "Ginger": 8000.0, "Turmeric": 7400.0, "Black Pepper": 48000.0, 
-                "Cardamom": 1500.0, "Barley": 2100.0, "Jowar": 2900.0, 
+                "Cardamom": 175000.0, "Barley": 2100.0, "Jowar": 2900.0, 
                 "Bajra": 2500.0, "Ragi": 3800.0, "Sunflowers": 6000.0,
                 "Lemon": 5000.0, "Ladies Finger": 3000.0, "Ivy Gourd": 3200.0, 
                 "Bottle Gourd": 1800.0, "Bitter Gourd": 3800.0
@@ -212,32 +227,8 @@ class AgricoML:
         rf_pred = self.rf_model.predict(X_new)[0]
         lr_pred = self.lr_model.predict(X_new)[0]
         
-        # Scale up if database was not loaded (using old CSV dataset)
-        if not getattr(self, 'db_loaded', False):
-            crop_baselines = {
-                "Wheat": 2700.0, "Paddy (Rice)": 2400.0, "Potato": 2100.0, 
-                "Tomato": 3500.0, "Onion": 3800.0, "Cotton": 7500.0, 
-                "Soybean": 4800.0, "Sugarcane": 330.0, "Maize": 2200.0, 
-                "Mustard": 5600.0, "Gram (Chana)": 5800.0, "Tur (Arhar)": 10500.0, 
-                "Moong": 8200.0, "Urad": 8800.0, "Groundnut": 7200.0, 
-                "Lemon": 5000.0, "Ladies Finger": 3000.0, "Ivy Gourd": 3200.0, 
-                "Bottle Gourd": 1800.0, "Bitter Gourd": 3800.0
-            }
-            historical_averages = {
-                "Wheat": 1800.0, "Paddy (Rice)": 1600.0, "Potato": 1000.0,
-                "Tomato": 1500.0, "Onion": 1400.0, "Cotton": 5500.0,
-                "Soybean": 3500.0, "Sugarcane": 280.0, "Maize": 1400.0,
-                "Mustard": 4200.0, "Gram (Chana)": 4000.0, "Tur (Arhar)": 6000.0,
-                "Moong": 5800.0, "Urad": 5500.0, "Groundnut": 4800.0,
-                "Lemon": 2500.0, "Ladies Finger": 1800.0, "Ivy Gourd": 1800.0,
-                "Bottle Gourd": 1000.0, "Bitter Gourd": 2000.0
-            }
-            clean_commodity = commodity.replace(" (Rice)", "").replace(" (Chana)", "").replace(" (Arhar)", "")
-            base_2026 = crop_baselines.get(commodity, crop_baselines.get(clean_commodity, 3000.0))
-            hist_avg = historical_averages.get(commodity, historical_averages.get(clean_commodity, 1500.0))
-            scaling_multiplier = base_2026 / hist_avg
-            rf_pred *= scaling_multiplier
-            lr_pred *= scaling_multiplier
+        # No scaling multiplier is needed as the CSV dataset already contains modern pricing up to 2025
+        pass
             
         return {
             "random_forest": round(rf_pred, 2),
