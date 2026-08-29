@@ -742,6 +742,33 @@ export const AIChatbot = ({ onBack, currentLang = 'English' }) => {
 };
 
 export const SettingsScreen = ({ onBack, theme, setTheme, wallpaper = 'none', setWallpaper, customWallpaper = '', setCustomWallpaper, onNavigate, language }) => {
+  const [apiKeyVal, setApiKeyVal] = useState(getApiKey());
+  const [keySaved, setKeySaved] = useState(false);
+
+  const handleSaveApiKey = async () => {
+    setApiKey(apiKeyVal);
+    setKeySaved(true);
+    setTimeout(() => setKeySaved(false), 2000);
+    try {
+      const apiBase = getApiBaseUrl();
+      const profileId = localStorage.getItem('agrico_profile_id');
+      if (profileId) {
+        const res = await fetch(`${apiBase}/get-profile?id=${profileId}`);
+        const data = await res.json();
+        const payload = {
+          ...data,
+          data_gov_api_key: apiKeyVal
+        };
+        await fetch(`${apiBase}/save-profile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to sync API key to backend:", e);
+    }
+  };
   const themes = [
     { id: 'classic', label: 'Classic', bg: '#2D6A4F', text: 'white' },
     { id: 'dark', label: 'Dark', bg: '#1E1E1E', text: '#52B788' },
@@ -864,6 +891,35 @@ export const SettingsScreen = ({ onBack, theme, setTheme, wallpaper = 'none', se
                 {w.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '10px', color: 'var(--gray-dark)' }}>Developer Settings</h3>
+        <div className="card" style={{ padding: '15px 20px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--gray-dark)' }}>Data.gov.in API Key</label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input 
+                type="password" 
+                value={apiKeyVal} 
+                onChange={(e) => setApiKeyVal(e.target.value)} 
+                placeholder="Enter your API Key" 
+                style={{ flex: 1, padding: '10px 15px', borderRadius: '8px', border: '1px solid var(--gray-light)', fontSize: '14px', background: 'var(--white)', color: 'var(--black)' }}
+              />
+              <button 
+                onClick={handleSaveApiKey} 
+                style={{ 
+                  background: 'var(--primary)', color: 'white', border: 'none', 
+                  padding: '10px 15px', borderRadius: '8px', fontWeight: '700', 
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' 
+                }}
+              >
+                {keySaved ? <Check size={16} /> : 'Save'}
+              </button>
+            </div>
+            <p style={{ fontSize: '11px', color: 'var(--gray-medium)', margin: '0' }}>
+              Enter a free API key from data.gov.in to enable live Mandi price feeds.
+            </p>
           </div>
         </div>
 

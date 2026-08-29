@@ -28,7 +28,12 @@ dist-ssr
 # Environment Variables — NEVER commit secrets
 .env
 .env.*
-!.env.example
+# Android / Gradle build folders
+.gradle/
+build/
+android/app/build/
+android/.gradle/
+local.properties
 
 # Security scan reports
 security-reports/

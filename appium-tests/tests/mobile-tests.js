@@ -17,14 +17,15 @@ async function runMobileAppiumTests() {
     'appium:appPackage': 'com.example.agricoapp',
     'appium:appActivity': '.MainActivity',
     'appium:automationName': 'UiAutomator2',
-    'appium:noReset': false,
+    'appium:noReset': true,
     'appium:ensureWebviewsHavePages': true,
     'appium:nativeWebScreenshot': true,
     'appium:newCommandTimeout': 3600
   };
 
   const options = {
-    path: '/wd/hub', // Default Appium 1.x path (change to '/' for Appium 2.x)
+    hostname: '127.0.0.1', // Use explicit IPv4 loopback to avoid Windows IPv6 localhost conflicts
+    path: '/', // Root path for Appium 2.x
     port: 4723,
     capabilities
   };

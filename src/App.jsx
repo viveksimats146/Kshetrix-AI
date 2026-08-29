@@ -168,6 +168,7 @@ export default function App() {
           if (data.wallpaper) setWallpaper(data.wallpaper);
           if (data.custom_wallpaper) setCustomWallpaper(data.custom_wallpaper);
           if (data.crop_preferences) setCropPreferences(data.crop_preferences);
+          if (data.data_gov_api_key) localStorage.setItem('data_gov_api_key', data.data_gov_api_key);
           return;
         }
       } catch (err) {
@@ -190,6 +191,7 @@ export default function App() {
           if (data.wallpaper) setWallpaper(data.wallpaper);
           if (data.custom_wallpaper) setCustomWallpaper(data.custom_wallpaper);
           if (data.crop_preferences) setCropPreferences(data.crop_preferences);
+          if (data.data_gov_api_key) localStorage.setItem('data_gov_api_key', data.data_gov_api_key);
         }
       } catch (err) {
         console.warn("Failed fallback loading profile from Supabase:", err.message);
@@ -236,7 +238,8 @@ export default function App() {
             theme: theme,
             wallpaper: wallpaper,
             custom_wallpaper: customWallpaper || null,
-            crop_preferences: cropPreferences
+            crop_preferences: cropPreferences,
+            data_gov_api_key: localStorage.getItem('data_gov_api_key') || ''
           };
           await fetch(`${apiBase}/save-profile`, {
             method: 'POST',
@@ -268,7 +271,8 @@ export default function App() {
         theme: theme,
         wallpaper: wallpaper,
         custom_wallpaper: customWallpaper || null,
-        crop_preferences: cropPreferences
+        crop_preferences: cropPreferences,
+        data_gov_api_key: localStorage.getItem('data_gov_api_key') || ''
       };
 
       const res = await fetch(`${apiBase}/save-profile`, {
@@ -330,7 +334,8 @@ export default function App() {
         district: profileDistrict,
         email: signupEmail,
         phone: signupPhone,
-        photo: photoBase64
+        photo: photoBase64,
+        data_gov_api_key: localStorage.getItem('data_gov_api_key') || ''
       };
       const res = await fetch(`${apiBase}/save-profile`, {
         method: 'POST',

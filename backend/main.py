@@ -100,6 +100,7 @@ def init_supabase_db():
         ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS theme TEXT DEFAULT 'classic';
         ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS wallpaper TEXT DEFAULT 'none';
         ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS custom_wallpaper TEXT;
+        ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS data_gov_api_key TEXT;
 
         -- Enable Row Level Security (RLS)
         ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -200,11 +201,104 @@ def init_supabase_db():
     except Exception as e:
         print(f"Error initializing Supabase DB: {e}")
 
+def sync_realtime_mandi_data(custom_api_key=None):
+    api_key = custom_api_key or os.environ.get("DATA_GOV_API_KEY")
+    if not api_key:
+        conn = get_db_connection()
+        if conn:
+            try:
+                cur = conn.cursor()
+                cur.execute("SELECT data_gov_api_key FROM public.profiles WHERE data_gov_api_key IS NOT NULL AND data_gov_api_key != '' LIMIT 1")
+                row = cur.fetchone()
+                if row:
+                    api_key = row[0]
+                    print("Found stored API key in user profiles to use for Mandi API sync.")
+                cur.close()
+                conn.close()
+            except Exception as db_e:
+                print(f"Failed to lookup stored API key from profiles: {db_e}")
+                
+    if not api_key:
+        print("DATA_GOV_API_KEY env variable not set and no stored profile key found. Skipping realtime Mandi API sync.")
+        return 0
+
+    resource_id = "9ef84268-d588-465a-a308-a864a43d0070"
+    url = f"https://api.data.gov.in/resource/{resource_id}?api-key={api_key}&format=json&limit=100"
+    
+    try:
+        import requests
+        print("Fetching realtime mandi prices from data.gov.in...")
+        r = requests.get(url, timeout=15)
+        if r.status_code != 200:
+            print(f"Mandi API fetch failed with status: {r.status_code}")
+            return 0
+            
+        data = r.json()
+        records = data.get("records", [])
+        if not records:
+            print("No records returned from Mandi API.")
+            return 0
+            
+        conn = get_db_connection()
+        if not conn:
+            print("Database connection failed for Mandi API sync.")
+            return 0
+            
+        cur = conn.cursor()
+        inserted = 0
+        
+        for rec in records:
+            try:
+                state = (rec.get("state") or rec.get("State") or rec.get("STATE") or "").strip()
+                district = (rec.get("district") or rec.get("District") or rec.get("DISTRICT") or "").strip()
+                market = (rec.get("market") or rec.get("Market") or "").strip()
+                commodity = (rec.get("commodity") or rec.get("Commodity") or "").strip()
+                modal_price = float(rec.get("modal_price") or rec.get("Modal_Price") or rec.get("modalPrice") or 0)
+                
+                arrival_date = rec.get("arrival_date") or rec.get("arrival_Date") or ""
+                from datetime import datetime, date
+                # Clean date format
+                if "/" in arrival_date:
+                    parts = arrival_date.split("/")
+                    if len(parts) == 3 and len(parts[2]) == 4:
+                        parsed_date = date(int(parts[2]), int(parts[1]), int(parts[0]))
+                    else:
+                        parsed_date = date.today()
+                else:
+                    parsed_date = date.today()
+                
+                if state and district and market and commodity and modal_price > 0:
+                    cur.execute(
+                        """
+                        INSERT INTO public.mandi_prices (state, district, market, commodity, modal_price, date)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                        ON CONFLICT ON CONSTRAINT unique_mandi_price_record DO NOTHING
+                        """,
+                        (state, district, market, commodity, modal_price, parsed_date)
+                    )
+                    inserted += 1
+            except Exception as row_err:
+                print(f"Skipping realtime record row due to error: {row_err}")
+                
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        print(f"Mandi API sync: successfully processed and saved {inserted} realtime records.")
+        return inserted
+    except Exception as err:
+        print(f"Error in realtime Mandi API sync task: {err}")
+        return 0
+
 @app.on_event("startup")
 async def startup_event():
     print("Starting Kshetrix-AI Backend...")
     try:
         init_supabase_db()
+        # Trigger background realtime Mandi API sync asynchronously
+        import threading
+        threading.Thread(target=sync_realtime_mandi_data, daemon=True).start()
+        
         agrico.load_and_preprocess()
         agrico.train_price_models()
         agrico.setup_nlp()
@@ -352,6 +446,7 @@ class ProfileSaveRequest(BaseModel):
     wallpaper: Optional[str] = None
     custom_wallpaper: Optional[str] = None
     crop_preferences: Optional[List[str]] = None
+    data_gov_api_key: Optional[str] = None
 
 class MandiPriceRecord(BaseModel):
     state: str
@@ -653,8 +748,8 @@ def save_profile(req: ProfileSaveRequest):
             exists = cur.fetchone()
             if exists:
                 cur.execute(
-                    "UPDATE public.profiles SET name = %s, state = %s, district = %s, email = %s, phone = %s, photo = %s, theme = %s, wallpaper = %s, custom_wallpaper = %s, crop_preferences = %s, updated_at = NOW() WHERE id = %s",
-                    (req.name, req.state, req.district, req.email, req.phone, req.photo, req.theme, req.wallpaper, req.custom_wallpaper, req.crop_preferences, profile_id)
+                    "UPDATE public.profiles SET name = %s, state = %s, district = %s, email = %s, phone = %s, photo = %s, theme = %s, wallpaper = %s, custom_wallpaper = %s, crop_preferences = %s, data_gov_api_key = %s, updated_at = NOW() WHERE id = %s",
+                    (req.name, req.state, req.district, req.email, req.phone, req.photo, req.theme, req.wallpaper, req.custom_wallpaper, req.crop_preferences, req.data_gov_api_key, profile_id)
                 )
             else:
                 profile_id = None
@@ -663,14 +758,20 @@ def save_profile(req: ProfileSaveRequest):
             import uuid
             new_id = str(uuid.uuid4())
             cur.execute(
-                "INSERT INTO public.profiles (id, name, state, district, email, phone, photo, theme, wallpaper, custom_wallpaper, crop_preferences) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                (new_id, req.name, req.state, req.district, req.email, req.phone, req.photo, req.theme, req.wallpaper, req.custom_wallpaper, req.crop_preferences)
+                "INSERT INTO public.profiles (id, name, state, district, email, phone, photo, theme, wallpaper, custom_wallpaper, crop_preferences, data_gov_api_key) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (new_id, req.name, req.state, req.district, req.email, req.phone, req.photo, req.theme, req.wallpaper, req.custom_wallpaper, req.crop_preferences, req.data_gov_api_key)
             )
             profile_id = new_id
             
         conn.commit()
         cur.close()
         conn.close()
+        
+        # Trigger background realtime sync asynchronously
+        if req.data_gov_api_key:
+            import threading
+            threading.Thread(target=sync_realtime_mandi_data, args=(req.data_gov_api_key,), daemon=True).start()
+            
         return {"status": "success", "id": profile_id}
     except Exception as e:
         conn.rollback()
@@ -685,7 +786,7 @@ def get_profile(id: str):
         
     try:
         cur = conn.cursor()
-        cur.execute("SELECT id, name, state, district, email, phone, photo, theme, wallpaper, custom_wallpaper, crop_preferences FROM public.profiles WHERE id = %s", (id,))
+        cur.execute("SELECT id, name, state, district, email, phone, photo, theme, wallpaper, custom_wallpaper, crop_preferences, data_gov_api_key FROM public.profiles WHERE id = %s", (id,))
         row = cur.fetchone()
         cur.close()
         conn.close()
@@ -694,7 +795,8 @@ def get_profile(id: str):
                 "id": row[0], "name": row[1], "state": row[2], "district": row[3], 
                 "email": row[4], "phone": row[5], "photo": row[6],
                 "theme": row[7], "wallpaper": row[8], "custom_wallpaper": row[9],
-                "crop_preferences": row[10]
+                "crop_preferences": row[10],
+                "data_gov_api_key": row[11]
             }
         raise HTTPException(status_code=404, detail="Profile not found.")
     except Exception as e:
@@ -795,6 +897,11 @@ def save_mandi_prices(req: MandiPricesSaveRequest):
         conn.rollback()
         print(f"Error saving mandi prices: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+@app.post("/sync-realtime-mandi")
+def sync_realtime_mandi():
+    inserted = sync_realtime_mandi_data()
+    return {"status": "success", "message": f"Realtime Mandi API sync processed. Saved {inserted} new records."}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
