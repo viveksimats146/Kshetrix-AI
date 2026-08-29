@@ -192,7 +192,7 @@ class AgricoML:
                 "Cardamom": 175000.0, "Barley": 2100.0, "Jowar": 2900.0, 
                 "Bajra": 2500.0, "Ragi": 3800.0, "Sunflowers": 6000.0,
                 "Lemon": 5000.0, "Ladies Finger": 3000.0, "Ivy Gourd": 3200.0, 
-                "Bottle Gourd": 1800.0, "Bitter Gourd": 3800.0
+                "Bottle Gourd": 1800.0, "Bitter Gourd": 3800.0, "Chilli": 20000.0
             }
             # Clean crop name if it has extra text
             clean_commodity = commodity.replace(" (Rice)", "").replace(" (Chana)", "").replace(" (Arhar)", "")

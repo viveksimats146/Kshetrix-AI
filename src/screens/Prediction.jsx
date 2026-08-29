@@ -30,7 +30,7 @@ export const PredictionInput = ({
     "Wheat", "Paddy (Rice)", "Potato", "Tomato", "Onion",
     "Cotton", "Soybean", "Sugarcane", "Maize", "Mustard",
     "Gram (Chana)", "Tur (Arhar)", "Moong", "Urad", "Groundnut",
-    "Garlic", "Ginger", "Turmeric", "Black Pepper", "Cardamom",
+    "Garlic", "Ginger", "Turmeric", "Black Pepper", "Cardamom", "Chilli",
     "Lemon", "Ladies Finger", "Ivy Gourd", "Bottle Gourd", "Bitter Gourd"
   ]);
   const [fetching, setFetching] = useState(true);
