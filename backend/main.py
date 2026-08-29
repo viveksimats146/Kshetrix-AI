@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel
@@ -481,8 +481,129 @@ OTP_MAX_SENDS       = 3     # max OTP sends in that window
 # Track failed verify attempts per key
 otp_fail_counts: dict = {}
 
+def send_email_bg(email: str, otp: str):
+    brevo_api_key = os.environ.get("BREVO_API_KEY")
+    brevo_sender_email = os.environ.get("BREVO_SENDER_EMAIL")
+    brevo_sender_name = os.environ.get("BREVO_SENDER_NAME", "Kshetrix AI")
+    resend_api_key = os.environ.get("RESEND_API_KEY")
+    
+    if brevo_api_key and brevo_sender_email:
+        try:
+            import urllib.request
+            import json
+            url = "https://api.brevo.com/v3/smtp/email"
+            headers = {
+                "api-key": brevo_api_key,
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "sender": {
+                    "name": brevo_sender_name,
+                    "email": brevo_sender_email
+                },
+                "to": [
+                    {
+                        "email": email
+                    }
+                ],
+                "subject": "Kshetrix-AI Verification Code",
+                "htmlContent": f"<p>Welcome to Kshetrix-AI! Your verification code is: <strong>{otp}</strong></p><p>This code will expire in 10 minutes.</p>"
+            }
+            
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers=headers,
+                method="POST"
+            )
+            
+            with urllib.request.urlopen(req) as response:
+                res_body = response.read().decode("utf-8")
+                print(f"Email sent successfully via Brevo to {email}. Response: {res_body}")
+        except Exception as e:
+            print(f"Error sending email via Brevo API: {e}")
+    elif resend_api_key:
+        try:
+            import urllib.request
+            import json
+            url = "https://api.resend.com/emails"
+            headers = {
+                "Authorization": f"Bearer {resend_api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "from": "onboarding@resend.dev",
+                "to": email,
+                "subject": "Kshetrix-AI Verification Code",
+                "html": f"<p>Welcome to Kshetrix-AI! Your verification code is: <strong>{otp}</strong></p><p>This code will expire in 10 minutes.</p>"
+            }
+            
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers=headers,
+                method="POST"
+            )
+            
+            with urllib.request.urlopen(req) as response:
+                res_body = response.read().decode("utf-8")
+                print(f"Email sent successfully via Resend to {email}. Response: {res_body}")
+        except Exception as e:
+            print(f"Error sending email via Resend API: {e}")
+    else:
+        smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+        smtp_port = int(os.environ.get("SMTP_PORT", 587))
+        smtp_user = os.environ.get("SMTP_USER")
+        smtp_password = os.environ.get("SMTP_PASSWORD")
+        sender_email = os.environ.get("SENDER_EMAIL", smtp_user)
+        
+        if smtp_user and smtp_password:
+            try:
+                msg = MIMEMultipart()
+                msg['From'] = sender_email
+                msg['To'] = email
+                msg['Subject'] = "Kshetrix-AI Verification Code"
+                
+                body = f"Welcome to Kshetrix-AI! Your verification code is: {otp}\n\nThis code will expire in 10 minutes."
+                msg.attach(MIMEText(body, 'plain'))
+                
+                if smtp_port == 465:
+                    server = smtplib.SMTP_SSL(smtp_host, smtp_port)
+                else:
+                    server = smtplib.SMTP(smtp_host, smtp_port)
+                    server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(sender_email, email, msg.as_string())
+                server.quit()
+                print(f"Email sent successfully to {email}")
+            except Exception as e:
+                print(f"Error sending email: {e}")
+        else:
+            print("WARNING: SMTP credentials not set. Cannot send real email.")
+
+def send_sms_bg(phone: str, otp: str):
+    twilio_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+    twilio_auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+    twilio_phone = os.environ.get("TWILIO_PHONE_NUMBER")
+    
+    if twilio_sid and twilio_auth_token and twilio_phone:
+        try:
+            formatted_phone = phone if phone.startswith('+') else f"+91{phone}"
+            from twilio.rest import Client
+            client = Client(twilio_sid, twilio_auth_token)
+            message = client.messages.create(
+                body=f"Your Kshetrix-AI verification code is: {otp}",
+                from_=twilio_phone,
+                to=formatted_phone
+            )
+            print(f"SMS sent successfully to {formatted_phone}, SID: {message.sid}")
+        except Exception as e:
+            print(f"Error sending SMS: {e}")
+    else:
+        print("WARNING: Twilio credentials not set. Cannot send real SMS.")
+
 @app.post("/send-otp")
-def send_otp(req: OTPRequest, request: Request = None):
+def send_otp(req: OTPRequest, background_tasks: BackgroundTasks, request: Request = None):
     key = req.phone_or_email
 
     # Rate limit: max OTP_MAX_SENDS sends per OTP_RATE_WINDOW seconds
@@ -548,157 +669,17 @@ def send_otp(req: OTPRequest, request: Request = None):
     else:
         print(f"OTP generated and sent for: {'email' if email else 'phone'}")
     
-    email_success = False
-    sms_success = False
-    channels_attempted = []
-    
+    # Run email and SMS dispatches asynchronously in background
     if email:
-        channels_attempted.append("email")
-        brevo_api_key = os.environ.get("BREVO_API_KEY")
-        brevo_sender_email = os.environ.get("BREVO_SENDER_EMAIL")
-        brevo_sender_name = os.environ.get("BREVO_SENDER_NAME", "Kshetrix AI")
-        resend_api_key = os.environ.get("RESEND_API_KEY")
-        
-        if brevo_api_key and brevo_sender_email:
-            try:
-                import urllib.request
-                import json
-                
-                url = "https://api.brevo.com/v3/smtp/email"
-                headers = {
-                    "api-key": brevo_api_key,
-                    "Content-Type": "application/json"
-                }
-                payload = {
-                    "sender": {
-                        "name": brevo_sender_name,
-                        "email": brevo_sender_email
-                    },
-                    "to": [
-                        {
-                            "email": email
-                        }
-                    ],
-                    "subject": "Kshetrix-AI Verification Code",
-                    "htmlContent": f"<p>Welcome to Kshetrix-AI! Your verification code is: <strong>{otp}</strong></p><p>This code will expire in 10 minutes.</p>"
-                }
-                
-                req = urllib.request.Request(
-                    url,
-                    data=json.dumps(payload).encode("utf-8"),
-                    headers=headers,
-                    method="POST"
-                )
-                
-                with urllib.request.urlopen(req) as response:
-                    res_body = response.read().decode("utf-8")
-                    print(f"Email sent successfully via Brevo to {email}. Response: {res_body}")
-                    email_success = True
-            except Exception as e:
-                print(f"Error sending email via Brevo API: {e}")
-        elif resend_api_key:
-            try:
-                import urllib.request
-                import json
-                
-                url = "https://api.resend.com/emails"
-                headers = {
-                    "Authorization": f"Bearer {resend_api_key}",
-                    "Content-Type": "application/json"
-                }
-                payload = {
-                    "from": "onboarding@resend.dev",
-                    "to": email,
-                    "subject": "Kshetrix-AI Verification Code",
-                    "html": f"<p>Welcome to Kshetrix-AI! Your verification code is: <strong>{otp}</strong></p><p>This code will expire in 10 minutes.</p>"
-                }
-                
-                req = urllib.request.Request(
-                    url,
-                    data=json.dumps(payload).encode("utf-8"),
-                    headers=headers,
-                    method="POST"
-                )
-                
-                with urllib.request.urlopen(req) as response:
-                    res_body = response.read().decode("utf-8")
-                    print(f"Email sent successfully via Resend to {email}. Response: {res_body}")
-                    email_success = True
-            except Exception as e:
-                print(f"Error sending email via Resend API: {e}")
-        else:
-            smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
-            smtp_port = int(os.environ.get("SMTP_PORT", 587))
-            smtp_user = os.environ.get("SMTP_USER")
-            smtp_password = os.environ.get("SMTP_PASSWORD")
-            sender_email = os.environ.get("SENDER_EMAIL", smtp_user)
-            
-            if smtp_user and smtp_password:
-                try:
-                    msg = MIMEMultipart()
-                    msg['From'] = sender_email
-                    msg['To'] = email
-                    msg['Subject'] = "Kshetrix-AI Verification Code"
-                    
-                    body = f"Welcome to Kshetrix-AI! Your verification code is: {otp}\n\nThis code will expire in 10 minutes."
-                    msg.attach(MIMEText(body, 'plain'))
-                    
-                    if smtp_port == 465:
-                        server = smtplib.SMTP_SSL(smtp_host, smtp_port)
-                    else:
-                        server = smtplib.SMTP(smtp_host, smtp_port)
-                        server.starttls()
-                    server.login(smtp_user, smtp_password)
-                    server.sendmail(sender_email, email, msg.as_string())
-                    server.quit()
-                    print(f"Email sent successfully to {email}")
-                    email_success = True
-                except Exception as e:
-                    print(f"Error sending email: {e}")
-            else:
-                print("WARNING: SMTP credentials not set. Cannot send real email.")
-            
+        background_tasks.add_task(send_email_bg, email, otp)
     if phone:
-        channels_attempted.append("sms")
-        twilio_sid = os.environ.get("TWILIO_ACCOUNT_SID")
-        twilio_auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
-        twilio_phone = os.environ.get("TWILIO_PHONE_NUMBER")
+        background_tasks.add_task(send_sms_bg, phone, otp)
         
-        if twilio_sid and twilio_auth_token and twilio_phone:
-            try:
-                formatted_phone = phone if phone.startswith('+') else f"+91{phone}"
-                from twilio.rest import Client
-                client = Client(twilio_sid, twilio_auth_token)
-                message = client.messages.create(
-                    body=f"Your Kshetrix-AI verification code is: {otp}",
-                    from_=twilio_phone,
-                    to=formatted_phone
-                )
-                print(f"SMS sent successfully to {formatted_phone}, SID: {message.sid}")
-                sms_success = True
-            except Exception as e:
-                print(f"Error sending SMS: {e}")
-        else:
-            print("WARNING: Twilio credentials not set. Cannot send real SMS.")
-            
-    real_channels_sent = []
-    if email_success:
-        real_channels_sent.append("email")
-    if sms_success:
-        real_channels_sent.append("sms")
-        
-    if len(real_channels_sent) > 0:
-        return {
-            "status": "success", 
-            "message": f"OTP sent via {', '.join(real_channels_sent)}.",
-            "channels": real_channels_sent
-        }
-    else:
-        return {
-            "status": "success",
-            "message": "OTP sent in simulation mode. Check your registered email or phone.",
-            "channels": channels_attempted
-        }
+    return {
+        "status": "success",
+        "message": "OTP dispatch initiated in background.",
+        "channels": ["email"] if email else (["sms"] if phone else [])
+    }
 
 @app.post("/verify-otp")
 def verify_otp(req: OTPVerifyRequest):
