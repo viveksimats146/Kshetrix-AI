@@ -42,6 +42,20 @@ android {
     }
 }
 
+// Automatically build React frontend before compiling the Android application
+tasks.register<Exec>("npmBuild") {
+    workingDir = file("../../")
+    if (System.getProperty("os.name").lowercase().contains("windows")) {
+        commandLine("cmd", "/c", "npm run build")
+    } else {
+        commandLine("npm", "run", "build")
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("npmBuild")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
