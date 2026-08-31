@@ -56,6 +56,24 @@ tasks.named("preBuild") {
     dependsOn("npmBuild")
 }
 
+// Automatically execute ADB port forwarding after installing the APK
+val adbReverse = tasks.register<Exec>("adbReverse") {
+    val sdkDir = project.extensions.getByType<com.android.build.gradle.BaseExtension>().sdkDirectory
+    val adbExecutable = File(sdkDir, "platform-tools/adb" + (if (System.getProperty("os.name").lowercase().contains("windows")) ".exe" else ""))
+    if (adbExecutable.exists()) {
+        commandLine(adbExecutable.absolutePath, "reverse", "tcp:8001", "tcp:8001")
+    } else {
+        commandLine("adb", "reverse", "tcp:8001", "tcp:8001")
+    }
+    isIgnoreExitValue = true
+}
+
+tasks.configureEach {
+    if (name.startsWith("install")) {
+        finalizedBy(adbReverse)
+    }
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
