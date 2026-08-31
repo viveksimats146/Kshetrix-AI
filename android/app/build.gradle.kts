@@ -53,7 +53,7 @@ tasks.register<Exec>("npmBuild") {
 }
 
 tasks.named("preBuild") {
-    dependsOn("npmBuild")
+    dependsOn("npmBuild", "adbReverse")
 }
 
 // Automatically execute ADB port forwarding after installing the APK
@@ -66,12 +66,6 @@ val adbReverse = tasks.register<Exec>("adbReverse") {
         commandLine("adb", "reverse", "tcp:8001", "tcp:8001")
     }
     isIgnoreExitValue = true
-}
-
-tasks.configureEach {
-    if (name.startsWith("install")) {
-        finalizedBy(adbReverse)
-    }
 }
 
 dependencies {
