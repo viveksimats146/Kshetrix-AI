@@ -1,3 +1,5 @@
+import java.net.Socket
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -55,11 +57,11 @@ tasks.register<Exec>("npmBuild") {
 // Automatically start Python backend if it is not already running
 tasks.register("ensureBackendRunning") {
     doLast {
-        var isRunning = false
+        var isRunning: Boolean
         try {
-            val socket = java.net.Socket("127.0.0.1", 8001)
-            socket.close()
-            isRunning = true
+            Socket("127.0.0.1", 8001).use {
+                isRunning = true
+            }
             println("[Agrico] Backend is already running on port 8001.")
         } catch (e: Exception) {
             isRunning = false
