@@ -52,20 +52,55 @@ tasks.register<Exec>("npmBuild") {
     }
 }
 
-tasks.named("preBuild") {
-    dependsOn("npmBuild", "adbReverse")
+// Automatically start Python backend if it is not already running
+tasks.register("ensureBackendRunning") {
+    doLast {
+        var isRunning = false
+        try {
+            val socket = java.net.Socket("127.0.0.1", 8001)
+            socket.close()
+            isRunning = true
+            println("[Agrico] Backend is already running on port 8001.")
+        } catch (e: Exception) {
+            isRunning = false
+        }
+
+        if (!isRunning) {
+            println("[Agrico] Starting Python Backend on port 8001...")
+            val backendDir = file("../../backend")
+            try {
+                if (System.getProperty("os.name").lowercase().contains("windows")) {
+                    ProcessBuilder("cmd", "/c", "start", "/b", "python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001")
+                        .directory(backendDir)
+                        .start()
+                } else {
+                    ProcessBuilder("python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001")
+                        .directory(backendDir)
+                        .start()
+                }
+            } catch (e: Exception) {
+                println("[Agrico] Warning: Could not auto-start python backend: ${e.message}")
+            }
+        }
+    }
 }
 
-// Automatically execute ADB port forwarding after installing the APK
-val adbReverse = tasks.register<Exec>("adbReverse") {
-    val sdkDir = project.extensions.getByType<com.android.build.gradle.BaseExtension>().sdkDirectory
-    val adbExecutable = File(sdkDir, "platform-tools/adb" + (if (System.getProperty("os.name").lowercase().contains("windows")) ".exe" else ""))
-    if (adbExecutable.exists()) {
-        commandLine(adbExecutable.absolutePath, "reverse", "tcp:8001", "tcp:8001")
+// Automatically bridge port 8001 from Android device to local backend server
+tasks.register<Exec>("reversePortBridge") {
+    val localAppData = System.getenv("LOCALAPPDATA") ?: ""
+    val adbFile = file("$localAppData/Android/Sdk/platform-tools/adb.exe")
+    if (adbFile.exists()) {
+        commandLine(adbFile.absolutePath, "reverse", "tcp:8001", "tcp:8001")
     } else {
         commandLine("adb", "reverse", "tcp:8001", "tcp:8001")
     }
     isIgnoreExitValue = true
+}
+
+tasks.named("preBuild") {
+    dependsOn("npmBuild")
+    dependsOn("ensureBackendRunning")
+    dependsOn("reversePortBridge")
 }
 
 dependencies {
